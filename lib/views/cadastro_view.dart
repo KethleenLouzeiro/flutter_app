@@ -8,135 +8,193 @@ class CadastroView extends StatefulWidget {
 }
 
 class _CadastroViewState extends State<CadastroView> {
-  final _nomeController = TextEditingController();
-  final _emailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
-  void _salvar() {
+  final _emailController = TextEditingController();
+  final _nomeController = TextEditingController();
+  final _senhaController = TextEditingController();
+  final _confirmarSenhaController = TextEditingController();
+
+  void _cadastrar() {
     if (_formKey.currentState!.validate()) {
-      final nome = _nomeController.text.trim();
-      final email = _emailController.text.trim();
-
-      debugPrint('Nome: $nome | Email: $email');
-
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Cadastro realizado com sucesso! 🎉'),
-          backgroundColor: const Color(0xFF10B981),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        const SnackBar(
+          content: Text('Cadastro realizado com sucesso!'),
         ),
       );
-
-      // Opcional: limpar campos
-      // _nomeController.clear();
-      // _emailController.clear();
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Criar Conta'),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        foregroundColor: const Color(0xFF1E293B),
+  InputDecoration _decoracaoCampo(String texto) {
+    return InputDecoration(
+      labelText: texto,
+      
+      filled:true,
+      fillColor: Colors.white.withValues(alpha:0.8),
+
+      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Vamos criar sua conta',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Preencha os dados abaixo',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 40),
 
-              // Campo Nome
-              TextFormField(
-                controller: _nomeController,
-                textCapitalization: TextCapitalization.words,
-                decoration: const InputDecoration(
-                  labelText: 'Nome completo',
-                  hintText: 'Digite seu nome',
-                  prefixIcon: Icon(Icons.person_outline_rounded),
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Campo obrigatório';
-                  if (v.trim().length < 3) return 'Nome muito curto';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 24),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: const BorderSide(color: Colors.grey),
+      ),
 
-              // Campo Email
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'E-mail',
-                  hintText: 'seuemail@exemplo.com',
-                  prefixIcon: Icon(Icons.alternate_email_rounded),
-                ),
-                validator: (v) {
-                  if (v == null || v.isEmpty) return 'Campo obrigatório';
-                  if (!v.contains('@') || !v.contains('.')) {
-                    return 'E-mail inválido';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 40),
-
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.check_circle_outline_rounded),
-                  label: const Text('Criar Conta'),
-                  onPressed: _salvar,
-                ),
-              ),
-
-              const SizedBox(height: 32),
-              Center(
-                child: Text(
-                  'Ao continuar você aceita nossos Termos e Política de Privacidade',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: const BorderSide(color: Colors.blue),
       ),
     );
   }
 
   @override
-  void dispose() {
-    _nomeController.dispose();
-    _emailController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+
+          
+
+          /// IMAGEM DE FUNDO
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/planodefundo.png',
+              fit: BoxFit.cover,
+            ),
+          ),
+
+
+
+
+
+          /// CONTEÚDO DA TELA
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Center(
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+
+                      const SizedBox(height:2),
+
+                      Center(
+                        child:Image.asset('assets/images/logotipo.png',
+                        width:150),
+                      ),
+
+                      const SizedBox(height:41),
+         
+                      /// EMAIL
+                      TextFormField(
+                        controller: _emailController,
+                        decoration: _decoracaoCampo('Digite seu e-mail'),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) {
+                            return 'Digite seu e-mail';
+                          }
+                          if (!v.contains('@')) {
+                            return 'E-mail inválido';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      /// NOME
+                      TextFormField(
+                        controller: _nomeController,
+                        decoration: _decoracaoCampo('Nome de Usuário'),
+                        validator: (v) {
+                          if (v == null || v.isEmpty) {
+                            return 'Digite seu nome';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      /// SENHA
+                      TextFormField(
+                        controller: _senhaController,
+                        obscureText: true,
+                        decoration: _decoracaoCampo('Senha'),
+                        validator: (v) {
+                          if (v == null || v.length < 6) {
+                            return 'Senha mínima de 6 caracteres';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      /// CONFIRMAR SENHA
+                      TextFormField(
+                        controller: _confirmarSenhaController,
+                        obscureText: true,
+                        decoration: _decoracaoCampo('Confirmação de Senha'),
+                        validator: (v) {
+                          if (v != _senhaController.text) {
+                            return 'As senhas não coincidem';
+                          }
+                          return null;
+                        },
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      /// BOTÃO
+SizedBox(
+  width: double.infinity,
+  height: 55,
+  child: Container(
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [
+          Color(0xFF6366F1),
+          Color(0xFF3B82F6),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(30),
+    ),
+    child: ElevatedButton(
+      onPressed: () {
+        _cadastrar();
+      },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
+      child: const Text(
+        "CADASTRA-SE",
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    ),
+  ),
+)
+ 
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_app/views/excluir_view.dart';
 import 'package:flutter_app/views/ajuda_suporte_view.dart';
 import 'package:flutter_app/views/configuracao_view.dart';
 import 'package:flutter_app/views/politica_privacidade_view.dart';
+import 'package:flutter_app/views/calendario_view.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -29,7 +30,7 @@ class _DashboardViewState extends State<DashboardView> {
         ],
       ),
 
-      // ✅ MENU LATERAL
+      // MENU LATERAL
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -66,8 +67,6 @@ class _DashboardViewState extends State<DashboardView> {
               ),
             ),
 
-
-
             ListTile(
               leading: const Icon(Icons.privacy_tip),
               title: const Text('Política de Privacidade'),
@@ -77,8 +76,7 @@ class _DashboardViewState extends State<DashboardView> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const PoliticaPrivacidadeView(),
+                    builder: (context) => const PoliticaPrivacidadeView(),
                   ),
                 );
               },
@@ -93,8 +91,7 @@ class _DashboardViewState extends State<DashboardView> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const AjudaSuporteView(),
+                    builder: (context) => const AjudaSuporteView(),
                   ),
                 );
               },
@@ -109,8 +106,7 @@ class _DashboardViewState extends State<DashboardView> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const ConfiguracaoView(),
+                    builder: (context) => const ConfiguracaoView(),
                   ),
                 );
               },
@@ -124,8 +120,7 @@ class _DashboardViewState extends State<DashboardView> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const ExcluirView(),
+                    builder: (context) => const ExcluirView(),
                   ),
                 );
               },
@@ -134,10 +129,9 @@ class _DashboardViewState extends State<DashboardView> {
         ),
       ),
 
-      // ✅ CONTEÚDO PRINCIPAL
       body: _buildBody(),
 
-      // ✅ BARRA INFERIOR
+      // BARRA INFERIOR
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (index) {
@@ -158,27 +152,21 @@ class _DashboardViewState extends State<DashboardView> {
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Perfil',
+            selectedIcon: Icon(Icons.share),
+            label: 'Compartilhar',
           ),
         ],
-      ),
-
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showComingSoon(context),
-        label: const Text('Novo Projeto'),
-        icon: const Icon(Icons.add_rounded),
       ),
     );
   }
 
-  // 🔹 Controle das telas
+  // Controle das telas
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
         return _buildDashboard();
       case 1:
-        return const Center(child: Text('Tela de Busca'));
+        return const Center(child: Text('Tela de busca'));
       case 2:
         return const Center(child: Text('Perfil do Usuário'));
       default:
@@ -186,7 +174,7 @@ class _DashboardViewState extends State<DashboardView> {
     }
   }
 
-  // 🔹 Dashboard principal
+  // DASHBOARD
   Widget _buildDashboard() {
     return CustomScrollView(
       slivers: [
@@ -197,7 +185,7 @@ class _DashboardViewState extends State<DashboardView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Olá, Usuário! 👋',
+                  'Olá, Viajantes! 👋',
                   style: Theme.of(context)
                       .textTheme
                       .headlineMedium
@@ -205,7 +193,7 @@ class _DashboardViewState extends State<DashboardView> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Explore widgets e conceitos Flutter',
+                  'Minha agenda de viagens',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.grey.shade700,
@@ -215,43 +203,55 @@ class _DashboardViewState extends State<DashboardView> {
             ),
           ),
         ),
+
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
           sliver: SliverGrid(
-            gridDelegate:
-                const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
               mainAxisSpacing: 16,
               crossAxisSpacing: 16,
-              childAspectRatio: 1.05,
+              childAspectRatio: 1,
             ),
             delegate: SliverChildListDelegate([
-              _buildCard(Icons.palette_outlined, 'Estilos & Temas',
-                  const Color(0xFF6366F1)),
-              _buildCard(Icons.animation_rounded, 'Animações',
-                  const Color(0xFF8B5CF6)),
-              _buildCard(Icons.list_alt_rounded, 'Listas Avançadas',
-                  const Color(0xFFEC4899)),
-              _buildCard(Icons.storage_rounded, 'Persistência',
-                  const Color(0xFF10B981)),
-              _buildCard(Icons.api_rounded, 'Consumir API',
-                  const Color(0xFFF59E0B)),
-              _buildCard(Icons.games_rounded, 'Mini Games',
-                  const Color(0xFFEF4444)),
+              _buildCard(Icons.directions, 'Minhas rotas', const Color(0xFF6366F1)),
+              _buildCard(Icons.beach_access, 'Lazer', const Color(0xFF8B5CF6)),
+              _buildCard(Icons.photo_library, 'Fotos', const Color(0xFFEC4899)),
+              _buildCard(Icons.restaurant, 'Restaurantes', const Color(0xFF10B981)),
+              _buildCard(Icons.hotel, 'Hoteis', const Color(0xFFF59E0B)),
+              _buildCard(Icons.directions_car, 'Transportes', const Color(0xFFEF4444)),
+              _buildCard(Icons.tour, 'Pontos turísticos', const Color(0xFFD4D429)),
+              _buildCard(Icons.calendar_today, 'Calendario', const Color(0xFF5E15D3)),
+              _buildCard(Icons.shopping_bag, 'Compras', const Color(0xFFC92093)),
             ]),
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 40)),
+
+        const SliverToBoxAdapter(
+          child: SizedBox(height: 40),
+        ),
       ],
     );
   }
 
+  // CARD
   Widget _buildCard(IconData icon, String title, Color color) {
     return GestureDetector(
-      onTap: () => _showComingSoon(context),
+      onTap: () {
+        if (title == 'Calendario') {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const CalendarioView(),
+            ),
+          );
+        } else {
+          _showComingSoon(context);
+        }
+      },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color.fromARGB(255, 217, 217, 238),
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -268,12 +268,12 @@ class _DashboardViewState extends State<DashboardView> {
             const SizedBox(height: 16),
             Text(
               title,
+              textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF1E293B),
               ),
-              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -283,9 +283,12 @@ class _DashboardViewState extends State<DashboardView> {
 
   void _showComingSoon(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Em breve! 🚀'),
+      SnackBar(
+        content: const Text('Em breve! 🚀'),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
       ),
     );
   }

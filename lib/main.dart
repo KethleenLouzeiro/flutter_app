@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'views/home_view.dart'; // import da tela
+import 'views/Splash_View.dart'; // import da tela
 
 void main() {
   runApp(const MyApp());
@@ -20,7 +20,7 @@ class MyApp extends StatelessWidget {
       ),
 
       // Tela inicial agora vem de outro arquivo
-      home: const HomeView(),
+      home: const SplashView(),
     );
   }
 }
