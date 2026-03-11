@@ -27,10 +27,10 @@ class _CadastroViewState extends State<CadastroView> {
 
   InputDecoration _decoracaoCampo(String texto) {
     return InputDecoration(
-      labelText: texto,
+      hintText: texto,
       
       filled:true,
-      fillColor: Colors.white.withValues(alpha:0.8),
+      fillColor: Colors.white,
 
       contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
 
@@ -53,6 +53,17 @@ class _CadastroViewState extends State<CadastroView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: Stack(
         children: [
 
