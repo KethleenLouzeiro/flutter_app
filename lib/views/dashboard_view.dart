@@ -18,223 +18,259 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        centerTitle: true,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.person_outline_rounded),
-            onPressed: () => _showComingSoon(context),
-          ),
-        ],
-      ),
+      drawer: _buildDrawer(),
 
-      // MENU LATERAL
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color.fromARGB(255, 1, 24, 58),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Colors.white,
-                    child: Icon(Icons.person, size: 30),
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    'Usuário',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                    ),
-                  ),
-                  Text(
-                    'kethleenks@hotmail.com',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 14,
-                    ),
-                  )
-                ],
-              ),
+      body: _buildBody(),
+
+      // BOTTOM NAVIGATION MODERNA
+      bottomNavigationBar: Container(
+        
+        margin: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 12,
+            )
+          ],
+        ),
+        child: NavigationBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          selectedIndex: _selectedIndex,
+          onDestinationSelected: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Home',
             ),
-
-            ListTile(
-              leading: const Icon(Icons.privacy_tip),
-              title: const Text('Política de Privacidade'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PoliticaPrivacidadeView(),
-                  ),
-                );
-              },
+            NavigationDestination(
+              icon: Icon(Icons.search_outlined),
+              selectedIcon: Icon(Icons.search),
+              label: 'Buscar',
             ),
-
-            ListTile(
-              leading: const Icon(Icons.help_outline),
-              title: const Text('Ajuda e Suporte'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AjudaSuporteView(),
-                  ),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.settings_outlined),
-              title: const Text('Configuração'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ConfiguracaoView(),
-                  ),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.delete_outline),
-              title: const Text('Excluir Conta'),
-              onTap: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ExcluirView(),
-                  ),
-                );
-              },
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person),
+              label: 'Perfil',
             ),
           ],
         ),
       ),
+    );
+  }
 
-      body: _buildBody(),
+  // DRAWER
+  Widget _buildDrawer() {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
 
-      // BARRA INFERIOR
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            _selectedIndex = index;
-          });
-        },
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+          const DrawerHeader(
+            decoration: BoxDecoration(
+              color: Color.fromARGB(255, 0, 20, 61),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.person, size: 30),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Usuário',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                Text(
+                  'kethleenks@hotmail.com',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                )
+              ],
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
-            label: 'Buscar',
+
+          ListTile(
+            leading: const Icon(Icons.privacy_tip),
+            title: const Text('Política de Privacidade'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PoliticaPrivacidadeView(),
+                ),
+              );
+            },
           ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.share),
-            label: 'Compartilhar',
+
+          ListTile(
+            leading: const Icon(Icons.help_outline),
+            title: const Text('Ajuda e Suporte'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const AjudaSuporteView(),
+                ),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.settings_outlined),
+            title: const Text('Configuração'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ConfiguracaoView(),
+                ),
+              );
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.delete_outline),
+            title: const Text('Excluir Conta'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ExcluirView(),
+                ),
+              );
+            },
           ),
         ],
       ),
     );
   }
 
-  // Controle das telas
+  // CONTROLE DE TELAS
   Widget _buildBody() {
     switch (_selectedIndex) {
       case 0:
         return _buildDashboard();
       case 1:
-        return const Center(child: Text('Tela de busca'));
+        return const Center(child: Text("Tela de busca"));
       case 2:
-        return const Center(child: Text('Perfil do Usuário'));
+        return const Center(child: Text("Perfil do usuário"));
       default:
         return _buildDashboard();
     }
   }
 
-  // DASHBOARD
+  // DASHBOARD MODERNO
   Widget _buildDashboard() {
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Olá, Viajantes! 👋',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Minha agenda de viagens',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ],
+    return Stack(
+      children: [
+
+        Container(color: const Color(0xFFF4F6FB)),
+
+// TOPO AZUL COM MENU
+Container(
+  height: 200,
+  padding: const EdgeInsets.fromLTRB(24, 60, 24, 30),
+  decoration: const BoxDecoration(
+    gradient: LinearGradient(
+      colors: [Color(0xFF1E3A8A), Color(0xFF2563EB)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.only(
+      bottomLeft: Radius.circular(40),
+      bottomRight: Radius.circular(40),
+    ),
+  ),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+
+      // MENU DRAWER
+      Builder(
+        builder: (context) => IconButton(
+          icon: const Icon(Icons.menu, color: Colors.white, size: 28),
+          onPressed: () {
+            Scaffold.of(context).openDrawer();
+          },
+        ),
+      ),
+
+      // TÍTULO E SUBTÍTULO
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Text(
+            "Viage Bem",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        ),
-
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1,
+          SizedBox(height: 4),
+          Text(
+            "Minha agenda de viagens",
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
             ),
-            delegate: SliverChildListDelegate([
-              _buildCard(Icons.directions, 'Minhas rotas', const Color(0xFF6366F1)),
-              _buildCard(Icons.beach_access, 'Lazer', const Color(0xFF8B5CF6)),
-              _buildCard(Icons.photo_library, 'Fotos', const Color(0xFFEC4899)),
-              _buildCard(Icons.restaurant, 'Restaurantes', const Color(0xFF10B981)),
-              _buildCard(Icons.hotel, 'Hoteis', const Color(0xFFF59E0B)),
-              _buildCard(Icons.directions_car, 'Transportes', const Color(0xFFEF4444)),
-              _buildCard(Icons.tour, 'Pontos turísticos', const Color(0xFFD4D429)),
-              _buildCard(Icons.calendar_today, 'Calendario', const Color(0xFF5E15D3)),
-              _buildCard(Icons.shopping_bag, 'Compras', const Color(0xFFC92093)),
-            ]),
-          ),
-        ),
+          )
+        ],
+      ),
 
-        const SliverToBoxAdapter(
-          child: SizedBox(height: 40),
+      // AVATAR
+      const CircleAvatar(
+        radius: 26,
+        backgroundColor: Colors.white,
+        child: Icon(Icons.person, color: Colors.blue),
+      ),
+    ],
+  ),
+),
+
+        // GRID
+        Padding(
+          padding: const EdgeInsets.only(top: 160),
+          child: GridView.count(
+            padding: const EdgeInsets.all(20),
+            crossAxisCount: 3,
+            mainAxisSpacing: 20,
+            crossAxisSpacing: 20,
+            children: [
+
+              _buildCard(Icons.map, 'Rotas', Color(0xFF6366F1)),
+              _buildCard(Icons.beach_access, 'Lazer', Color(0xFF8B5CF6)),
+              _buildCard(Icons.photo_library, 'Fotos', Color(0xFFEC4899)),
+              _buildCard(Icons.restaurant, 'Restaurantes', Color(0xFF10B981)),
+              _buildCard(Icons.hotel, 'Hotéis', Color(0xFFF59E0B)),
+              _buildCard(Icons.directions_car, 'Transportes', Color(0xFFEF4444)),
+              _buildCard(Icons.place, 'Turismo', Color(0xFFD4D429)),
+              _buildCard(Icons.calendar_today, 'Calendario', Color(0xFF5E15D3)),
+              _buildCard(Icons.shopping_bag, 'Compras', Color(0xFFC92093)),
+
+            ],
+          ),
         ),
       ],
     );
   }
 
-  // CARD
+  // CARD MODERNO
   Widget _buildCard(IconData icon, String title, Color color) {
     return GestureDetector(
       onTap: () {
@@ -251,28 +287,36 @@ class _DashboardViewState extends State<DashboardView> {
       },
       child: Container(
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 217, 217, 238),
-          borderRadius: BorderRadius.circular(24),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.12),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
-            ),
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 8),
+            )
           ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 48, color: color),
-            const SizedBox(height: 16),
+
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color, size: 30),
+            ),
+
+            const SizedBox(height: 12),
+
             Text(
               title,
-              textAlign: TextAlign.center,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1E293B),
               ),
             ),
           ],
