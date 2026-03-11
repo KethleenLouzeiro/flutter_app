@@ -28,7 +28,7 @@ class _SplashViewState extends State<SplashView>
     Future.delayed(const Duration(seconds: 5), () {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const OnboardingView()),
+        MaterialPageRoute(builder: (_) => const WelcomeView()),
       );
     });
   }
