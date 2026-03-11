@@ -1,131 +1,153 @@
 import 'package:flutter/material.dart';
-import 'cadastro_view.dart';
-import 'dashboard_view.dart'; 
 
-class OnboardingView extends StatelessWidget {
-  const OnboardingView({super.key});
+class WelcomeView extends StatelessWidget {
+  const WelcomeView({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFF0F4FF), Color(0xFFFFFFFF)],
+      resizeToAvoidBottomInset: true,
+      body: Stack(
+        children: [
+
+          // 🔹 IMAGEM DE FUNDO
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/planodefundo.png', 
+              fit: BoxFit.cover,
+              alignment: Alignment.topCenter,
             ),
           ),
-          child: Column(
-            children: [
-              const Spacer(flex: 2),
 
-              // Ilustração / ícone principal
-              Container(
-                padding: const EdgeInsets.all(32),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF6366F1).withOpacity(0.18),
-                      blurRadius: 32,
-                      offset: const Offset(0, 12),
+          // 🔹 CONTEÚDO DA TELA
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+
+                       const SizedBox(height: 5),
+                        Center(
+                        child: Image.asset(
+                       'assets/images/logotipo.png',
+                       width: 195,
                     ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.auto_awesome_rounded,
-                  size: 90,
-                  color: Color(0xFF6366F1),
-                ),
-              ),
+                     ),
 
-              const SizedBox(height: 40),
+                  const SizedBox(height: 66),
 
-              const Text(
-                'Pronto para começar?',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 40),
-                child: Text(
-                  'Crie sua conta para salvar seus dados ou pule e explore o app agora mesmo.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade700,
-                    height: 1.5,
+                  const Text(
+                    "Boas Vindas!",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 255, 255, 255), // melhor leitura no fundo
+                    ),
                   ),
-                ),
-              ),
 
-              const Spacer(flex: 3),
+                  const SizedBox(height: 12),
 
-              // Botões
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  children: [
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const DashboardView(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: const Color(0xFF6366F1),
-                          elevation: 2,
-                          side: const BorderSide(color: Color(0xFF6366F1), width: 1.5),
-                        ),
-                        child: const Text('Continuar sem cadastro'),
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: "Digite seu e-mail ou Telefone",
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha:0.9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 18),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  TextField(
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      hintText: "Senha",
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha:0.9),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 18),
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {},
+                      child: const Text(
+                        "Esqueceu a senha?",
+                        style: TextStyle(color: Colors.white),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const CadastroView(),
-                            ),
-                          );
-                        },
-                        child: const Text('Criar minha conta'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  ),
 
-              const Spacer(flex: 2),
+                  const SizedBox(height: 10),
 
-              Text(
-                'Versão didática • Flutter',
-                style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
+SizedBox(
+  width: double.infinity,
+  height: 55,
+  child: Container(
+    decoration: BoxDecoration(
+      gradient: const LinearGradient(
+        colors: [
+          Color(0xFF6366F1),
+          Color(0xFF3B82F6),
+        ],
+      ),
+      borderRadius: BorderRadius.circular(30),
+    ),
+    child: ElevatedButton(
+      onPressed: () {},
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
         ),
+      ),
+      child: const Text(
+        "ENTRAR",
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+        ),
+      ),
+    ),
+  ),
+),
+
+                  const SizedBox(height: 100),
+
+                  const Spacer(),
+
+                  Center(
+                    child: TextButton(
+                      onPressed: () {},
+                      child: const Text(
+                        "Não tem uma conta? Cadastre-se",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

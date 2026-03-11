@@ -58,7 +58,7 @@ class HomeView extends StatelessWidget {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF6366F1).withOpacity(0.15),
+                              color: const Color(0xFF6366F1).withValues(alpha: 0.15),
                               blurRadius: 24,
                               offset: const Offset(0, 8),
                             ),
@@ -113,7 +113,7 @@ class HomeView extends StatelessWidget {
                         onPressed: () {
   Navigator.pushReplacement(
     context,
-    MaterialPageRoute(builder: (_) => const OnboardingView()),
+    MaterialPageRoute(builder: (_) => const WelcomeView()),
   );
 },
                       ),
