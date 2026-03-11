@@ -50,7 +50,7 @@ class _DashboardViewState extends State<DashboardView> {
                   ),
                   SizedBox(height: 12),
                   Text(
-                    'Usuário',
+                    'Usuário Exemplo',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
