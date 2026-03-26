@@ -3,7 +3,7 @@ import 'cadastro_view.dart';
 import 'dashboard_view.dart';
 import 'Postos_view.dart';
 import 'pontosturisticos_view.dart';
-import 'oficinas_carros_view.dart';
+// import 'oficinas_carros_view.dart';
 
 
 class OnboardingView extends StatelessWidget {
@@ -154,12 +154,12 @@ class OnboardingView extends StatelessWidget {
                       height: 56,
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const WorkshopsScreen(),
-                            ),
-                          );
+                          // Navigator.push(
+                          //   context,
+                          //   MaterialPageRoute(
+                          //     builder: (_) => const WorkshopsScreen(),
+                          //   ),
+                          // );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color.fromARGB(
