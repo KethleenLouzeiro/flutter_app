@@ -114,7 +114,7 @@ class HomeView extends StatelessWidget {
                         onPressed: () {
   Navigator.pushReplacement(
     context,
-    MaterialPageRoute(builder: (_) => const OnboardingView()),
+    MaterialPageRoute(builder: (_) => const CadastroView()),
   );
 },
                       ),

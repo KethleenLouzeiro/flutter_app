@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'login_boas_vindas_view.dart'; // ajuste o caminho conforme sua estrutura
 
 class CadastroView extends StatefulWidget {
   const CadastroView({super.key});
@@ -28,21 +29,18 @@ class _CadastroViewState extends State<CadastroView> {
   InputDecoration _decoracaoCampo(String texto) {
     return InputDecoration(
       hintText: texto,
-      
-      filled:true,
+      filled: true,
       fillColor: Colors.white,
-
-      contentPadding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-
+      contentPadding:
+          const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
       ),
-
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
+        borderSide:
+            const BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
       ),
-
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: const BorderSide(color: Colors.blue),
@@ -53,11 +51,22 @@ class _CadastroViewState extends State<CadastroView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // AppBar transparente com botão de voltar
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            // Volta para a tela anterior (LoginBoasVindasView)
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      extendBodyBehindAppBar: true, // Faz o AppBar sobrepor a imagem de fundo
       body: Stack(
         children: [
-
-          
-
           /// IMAGEM DE FUNDO
           Positioned.fill(
             child: Image.asset(
@@ -65,10 +74,6 @@ class _CadastroViewState extends State<CadastroView> {
               fit: BoxFit.cover,
             ),
           ),
-
-
-
-
 
           /// CONTEÚDO DA TELA
           Padding(
@@ -79,16 +84,18 @@ class _CadastroViewState extends State<CadastroView> {
                   key: _formKey,
                   child: Column(
                     children: [
+                      const SizedBox(height: 20),
 
-                      const SizedBox(height:2),
-
+                      /// LOGO
                       Center(
-                        child:Image.asset('assets/images/logotipo.png',
-                        width:150),
+                        child: Image.asset(
+                          'assets/images/logotipo.png',
+                          width: 150,
+                        ),
                       ),
 
-                      const SizedBox(height:41),
-         
+                      const SizedBox(height: 40),
+
                       /// EMAIL
                       TextFormField(
                         controller: _emailController,
@@ -150,43 +157,42 @@ class _CadastroViewState extends State<CadastroView> {
 
                       const SizedBox(height: 30),
 
-                      /// BOTÃO
-SizedBox(
-  width: double.infinity,
-  height: 55,
-  child: Container(
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [
-          Color(0xFF6366F1),
-          Color(0xFF3B82F6),
-        ],
-      ),
-      borderRadius: BorderRadius.circular(30),
-    ),
-    child: ElevatedButton(
-      onPressed: () {
-        _cadastrar();
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.transparent,
-        shadowColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-      ),
-      child: const Text(
-        "CADASTRA-SE",
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-    ),
-  ),
-)
- 
+                      /// BOTÃO CADASTRAR
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF6366F1),
+                                Color(0xFF3B82F6),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: ElevatedButton(
+                            onPressed: _cadastrar,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                            ),
+                            child: const Text(
+                              "CADASTRA-SE",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
