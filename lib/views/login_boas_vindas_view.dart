@@ -1,146 +1,201 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_app/views/cadastro_view.dart';
+import 'cadastro_view.dart';
+import 'dashboard_view.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class LoginBoasVindasView extends StatelessWidget {
-  const LoginBoasVindasView({super.key});
+class LoginView extends StatefulWidget {
+  const LoginView({super.key});
+
+  @override
+  State<LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<LoginView> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _emailController = TextEditingController();
+  final _senhaController = TextEditingController();
+
+  bool _isLoading = false;
+
+  void _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final email = _emailController.text.trim();
+    final senha = _senhaController.text.trim();
+
+    try {
+      // 🔥 AQUI VAI ENTRAR O FIREBASE DEPOIS
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: senha,
+);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login realizado: $email')),
+      );
+
+      Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const DashboardView(),
+      ),
+);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Erro ao fazer login')),
+      );
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _senhaController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF6366F1),
-              Color(0xFF1E293B),
-            ],
-          ),
-        ),
+      body: _background(
         child: SafeArea(
-          child: Column(
-            children: [
-
-              /// LOGO
-              // Expanded(
-              //   flex: 2,
-              //   child: Center(
-              //     child: Image.asset(
-              //       'assets/images/logo.png',
-              //       fit: BoxFit.contain,
-              //     ),
-              //   ),
-              // ),
-
-              /// TEXTO
-              const Expanded(
-                flex: 1,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Bem-vindo',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Seu app começa aqui 🚀',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              
-              //     // TextFormField(
-              //     //       controller: _confirmarSenhaController,
-              //     //       obscureText: true,
-              //     //       decoration: _decoracaoCampo('Confirmação de Senha'),
-              //     //       validator: (v) {
-              //     //         if (v != _senhaController.text) {
-              //     //           return 'As senhas não coincidem';
-              //     //         }
-              //     //         return null;
-              //           },
-              //         ),
-              //     ),
-              // ),
-              /// BOTÕES
-              Expanded(
-                flex: 2,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-
-                      /// BOTÃO ENTRAR
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.orange,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () {
-                            // navegar para login
-                          },
-                          child: const Text(
-                            'Entrar',
-                            style: TextStyle(fontSize: 16),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      /// BOTÃO CADASTRAR
-                      SizedBox(
-                        width: double.infinity,
-                        height: 50,
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.white),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const CadastroView()),
-                          );
-                          },
-                          child: const Text(
-                            'Criar conta',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-            ],
+          child: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                _header(),
+                _form(context),
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _background({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Color(0xFF6366F1),
+            Color(0xFF1E293B),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+      child: child,
+    );
+  }
+
+  Widget _header() {
+    return const Expanded(
+      flex: 1,
+      child: Center(
+        child: Text(
+          'Login',
+          style: TextStyle(
+            fontSize: 28,
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _form(BuildContext context) {
+    return Expanded(
+      flex: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            /// EMAIL
+            TextFormField(
+              controller: _emailController,
+              decoration: _inputStyle('Email'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Digite seu email';
+                }
+                if (!value.contains('@')) {
+                  return 'Email inválido';
+                }
+                return null;
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            /// SENHA
+            TextFormField(
+              controller: _senhaController,
+              obscureText: true,
+              decoration: _inputStyle('Senha'),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Digite sua senha';
+                }
+                if (value.length < 6) {
+                  return 'Mínimo 6 caracteres';
+                }
+                return null;
+              },
+            ),
+
+            const SizedBox(height: 24),
+
+            /// BOTÃO LOGIN
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _login,
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text('Entrar'),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            /// IR PARA CADASTRO
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CadastroView(),
+                  ),
+                );
+              },
+              child: const Text(
+                'Criar conta',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  InputDecoration _inputStyle(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: Colors.white,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
       ),
     );
   }

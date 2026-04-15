@@ -1,4 +1,4 @@
-import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_app/views/login_boas_vindas_view.dart';
 
@@ -31,7 +31,7 @@ class _SplashViewState extends State<SplashView>
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => LoginBoasVindasView(),
+          builder: (_) => LoginView(),
         ),
       );
     });

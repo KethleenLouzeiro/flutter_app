@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "738637005841",
+    "project_id": "viagebemapp",
+    "storage_bucket": "viagebemapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:738637005841:android:3e9f1f9bc97ec459739db0",
+        "android_client_info": {
+          "package_name": "com.example.flutter_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyApJ5qUvaZBbc3M5xkVoCyrpvo493GTThw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

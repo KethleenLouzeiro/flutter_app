@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'login_boas_vindas_view.dart'; // ajuste o caminho conforme sua estrutura
+import 'package:firebase_auth/firebase_auth.dart';
 
 class CadastroView extends StatefulWidget {
   const CadastroView({super.key});
@@ -16,13 +16,46 @@ class _CadastroViewState extends State<CadastroView> {
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
 
-  void _cadastrar() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cadastro realizado com sucesso!'),
-        ),
+  bool _isLoading = false;
+
+  Future<void> _cadastrar() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      /// 🔥 CRIA USUÁRIO NO FIREBASE
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _senhaController.text.trim(),
       );
+
+      /// 🔥 SALVA NOME DO USUÁRIO
+      await userCredential.user!.updateDisplayName(
+        _nomeController.text.trim(),
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cadastro realizado com sucesso!')),
+      );
+
+      /// VOLTA PARA LOGIN
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      String erro = 'Erro ao cadastrar';
+
+      if (e.code == 'email-already-in-use') {
+        erro = 'Email já está em uso';
+      } else if (e.code == 'weak-password') {
+        erro = 'Senha muito fraca';
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(erro)),
+      );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -31,175 +64,108 @@ class _CadastroViewState extends State<CadastroView> {
       hintText: texto,
       filled: true,
       fillColor: Colors.white,
-      contentPadding:
-          const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide:
-            const BorderSide(color: Color.fromARGB(255, 255, 255, 255)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(30),
-        borderSide: const BorderSide(color: Colors.blue),
       ),
     );
   }
 
   @override
+  void dispose() {
+    _emailController.dispose();
+    _nomeController.dispose();
+    _senhaController.dispose();
+    _confirmarSenhaController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // AppBar transparente com botão de voltar
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            // Volta para a tela anterior (LoginBoasVindasView)
-            Navigator.pop(context);
-          },
-        ),
+        title: const Text('Cadastro'),
       ),
-      extendBodyBehindAppBar: true, // Faz o AppBar sobrepor a imagem de fundo
-      body: Stack(
-        children: [
-          /// IMAGEM DE FUNDO
-          Positioned.fill(
-            child: Image.asset(
-              'assets/images/planodefundo.png',
-              fit: BoxFit.cover,
-            ),
-          ),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              /// EMAIL
+              TextFormField(
+                controller: _emailController,
+                decoration: _decoracaoCampo('Email'),
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return 'Digite o email';
+                  }
+                  if (!v.contains('@')) {
+                    return 'Email inválido';
+                  }
+                  return null;
+                },
+              ),
 
-          /// CONTEÚDO DA TELA
-          Padding(
-            padding: const EdgeInsets.all(24),
-            child: Center(
-              child: SingleChildScrollView(
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-                      /// LOGO
-                      Center(
-                        child: Image.asset(
-                          'assets/images/logotipo.png',
-                          width: 150,
-                        ),
-                      ),
+              /// NOME
+              TextFormField(
+                controller: _nomeController,
+                decoration: _decoracaoCampo('Nome'),
+                validator: (v) {
+                  if (v == null || v.isEmpty) {
+                    return 'Digite o nome';
+                  }
+                  return null;
+                },
+              ),
 
-                      const SizedBox(height: 40),
+              const SizedBox(height: 16),
 
-                      /// EMAIL
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: _decoracaoCampo('Digite seu e-mail'),
-                        validator: (v) {
-                          if (v == null || v.isEmpty) {
-                            return 'Digite seu e-mail';
-                          }
-                          if (!v.contains('@')) {
-                            return 'E-mail inválido';
-                          }
-                          return null;
-                        },
-                      ),
+              /// SENHA
+              TextFormField(
+                controller: _senhaController,
+                obscureText: true,
+                decoration: _decoracaoCampo('Senha'),
+                validator: (v) {
+                  if (v == null || v.length < 6) {
+                    return 'Mínimo 6 caracteres';
+                  }
+                  return null;
+                },
+              ),
 
-                      const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-                      /// NOME
-                      TextFormField(
-                        controller: _nomeController,
-                        decoration: _decoracaoCampo('Nome de Usuário'),
-                        validator: (v) {
-                          if (v == null || v.isEmpty) {
-                            return 'Digite seu nome';
-                          }
-                          return null;
-                        },
-                      ),
+              /// CONFIRMAR SENHA
+              TextFormField(
+                controller: _confirmarSenhaController,
+                obscureText: true,
+                decoration: _decoracaoCampo('Confirmar senha'),
+                validator: (v) {
+                  if (v != _senhaController.text) {
+                    return 'As senhas não coincidem';
+                  }
+                  return null;
+                },
+              ),
 
-                      const SizedBox(height: 20),
+              const SizedBox(height: 24),
 
-                      /// SENHA
-                      TextFormField(
-                        controller: _senhaController,
-                        obscureText: true,
-                        decoration: _decoracaoCampo('Senha'),
-                        validator: (v) {
-                          if (v == null || v.length < 6) {
-                            return 'Senha mínima de 6 caracteres';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      /// CONFIRMAR SENHA
-                      TextFormField(
-                        controller: _confirmarSenhaController,
-                        obscureText: true,
-                        decoration: _decoracaoCampo('Confirmação de Senha'),
-                        validator: (v) {
-                          if (v != _senhaController.text) {
-                            return 'As senhas não coincidem';
-                          }
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 30),
-
-                      /// BOTÃO CADASTRAR
-                      SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                Color(0xFF6366F1),
-                                Color(0xFF3B82F6),
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _cadastrar,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-                            child: const Text(
-                              "CADASTRA-SE",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-                    ],
-                  ),
+              /// BOTÃO
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _cadastrar,
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Cadastrar'),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
