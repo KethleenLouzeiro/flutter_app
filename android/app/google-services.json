@@ -1,26 +1,51 @@
 {
   "project_info": {
-    "project_number": "738637005841",
-    "project_id": "viagebemapp",
-    "storage_bucket": "viagebemapp.firebasestorage.app"
+    "project_number": "287737363518",
+    "project_id": "viagebem-26344",
+    "storage_bucket": "viagebem-26344.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:738637005841:android:3e9f1f9bc97ec459739db0",
+        "mobilesdk_app_id": "1:287737363518:android:1935ca4723de0e55c4a56f",
         "android_client_info": {
           "package_name": "com.example.flutter_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "287737363518-2bh5sstthr97cnlnn67eocksjh6sv9g7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutter_app",
+            "certificate_hash": "044efdf99f5cb65203467a42e918a1248cefb3b6"
+          }
+        },
+        {
+          "client_id": "287737363518-7rjh4cp98flidbemv9m6np2mfv1ampn6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
-          "current_key": "AIzaSyApJ5qUvaZBbc3M5xkVoCyrpvo493GTThw"
+          "current_key": "AIzaSyBH6M76tgSCeCEUIJTQiWLHDWBYwUX0nBg"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "287737363518-7rjh4cp98flidbemv9m6np2mfv1ampn6.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "287737363518-73354vd3oi3fqbkncqfnhf5u128rb3l2.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.flutterApp"
+              }
+            }
+          ]
         }
       }
     }
