@@ -1,61 +1,77 @@
 
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 
-class WorkshopsScreen extends StatelessWidget {
-  const WorkshopsScreen({super.key});
+class OficinasScreen extends StatelessWidget {
+  OficinasScreen({super.key});
 
-  static final List<Map<String, String>> workshops = [
+  final List<Map<String, String>> oficinas = [
     {
-      "name": "Oficina Mecânica",
-      "location": "Av. Nazaré, 1500",
-      "description":
-          "Serviços completos de manutenção preventiva e corretiva para carros e motos. Revisão geral, troca de óleo, filtros e diagnóstico eletrônico.",
-      "status": "Aberto 24h",
-      "distance": "2.3 km",
-      "rating": "4.5",
+      "name": "Oficina Mecânica Turbo Car",
+      "address": "Av. Almirante Barroso - Belém",
+      "distance": "2.1 km",
+      "status": "Aberto 08h às 18h",
+      "rating": "4.8",
+      "type": "Mecânica Geral",
+      "history":
+          "Especializada em manutenção preventiva e corretiva, alinhamento, balanceamento e troca de óleo.",
     },
     {
-      "name": "Especialista em Injeção Eletrônica",
-      "location": "Rua dos Carros, 250",
-      "description":
-          "Diagnóstico e reparo de sistemas de injeção eletrônica, sensores, atuadores e módulos ECU.",
-      "status": "Aberto 24h",
-      "distance": "1.8 km",
-      "rating": "4.5",
+      "name": "Auto Center Belém",
+      "address": "Av. Augusto Montenegro",
+      "distance": "4.3 km",
+      "status": "Atendimento 24h",
+      "rating": "4.7",
+      "type": "Auto Center",
+      "history":
+          "Referência em serviços automotivos com equipe especializada em suspensão, freios e elétrica.",
     },
     {
-      "name": "Oficina de Suspensão e Direção",
-      "location": "Av. Almirante Barroso, 800",
-      "description":
-          "Especializada em suspensão, direção, freios e alinhamento.",
-      "status": "Aberto 24h",
-      "distance": "3.1 km",
+      "name": "Mecânica do João",
+      "address": "Tv. Padre Eutíquio",
+      "distance": "1.5 km",
+      "status": "Aberto 07h às 19h",
       "rating": "4.5",
+      "type": "Oficina Mecânica",
+      "history":
+          "Atendimento rápido e confiável com foco em motores, revisão completa e diagnóstico eletrônico.",
+    },
+    {
+      "name": "Garage Prime",
+      "address": "Bairro Umarizal",
+      "distance": "3.0 km",
+      "status": "Aberto 09h às 20h",
+      "rating": "4.9",
+      "type": "Premium Auto Service",
+      "history":
+          "Oficina premium com serviços de estética automotiva, manutenção avançada e atendimento especializado.",
     },
   ];
 
   @override
   Widget build(BuildContext context) {
-    final spots = workshops;
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: const Color(0xFFF1F1F1),
+
+      /// APPBAR
       appBar: AppBar(
+        elevation: 0,
+        centerTitle: true,
         title: const Text(
-          'Oficinas Mecânicas em Belém',
+          'Oficinas Mecânicas',
           style: TextStyle(
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.w800,
             color: Colors.white,
           ),
         ),
-        centerTitle: true,
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF0D47A1), Color(0xFF1E88E5)],
+              colors: [
+                Color(0xFF424242),
+                Color(0xFF757575),
+              ],
             ),
           ),
         ),
@@ -64,80 +80,235 @@ class WorkshopsScreen extends StatelessWidget {
       body: Column(
         children: [
 
-          /// 🔍 BUSCA
+          /// CAMPO DE BUSCA
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             child: TextField(
+              style: const TextStyle(color: Colors.black87),
               decoration: InputDecoration(
                 hintText: "Buscar oficinas...",
                 prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(18),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
 
-          /// 🗺️ MAPA (CORRIGIDO - SEM TOKEN)
-          Container(
-            height: 200,
-            width: double.infinity,
-            margin: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Stack(
-                children: [
-                  Image.network(
-                    'https://maps.googleapis.com/maps/api/staticmap?center=-1.45,-48.49&zoom=12&size=600x300&maptype=roadmap',
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: 200,
-                    errorBuilder: (_, __, ___) {
-                      return Container(
-                        color: Colors.blue[100],
-                        child: const Center(
-                          child: Text("Mapa indisponível"),
-                        ),
-                      );
-                    },
-                  ),
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      color: Colors.white,
-                      child: const Text(
-                        "Mapa de Belém",
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  )
-                ],
+          /// HEADER
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 0, 18, 10),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "🔧 ${oficinas.length} oficinas disponíveis",
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: Colors.black87,
+                  fontSize: 12,
+                ),
               ),
             ),
           ),
 
-          const SizedBox(height: 10),
-
-          /// 📍 LISTA
+          /// LISTA
           Expanded(
             child: ListView.builder(
-              itemCount: spots.length,
+              itemCount: oficinas.length,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               itemBuilder: (context, index) {
-                var spot = spots[index];
+                var oficina = oficinas[index];
 
-                return Card(
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: ListTile(
-                    title: Text(spot["name"]!),
-                    subtitle: Text(spot["location"]!),
-                    trailing: Text("${spot["rating"]} ⭐"),
-                    onTap: () => _mostraHistoria(context, spot),
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: Card(
+                    elevation: 4,
+                    color: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+
+                          /// NOME + RATING
+                          Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade300,
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                        Icons.build,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        oficina["name"]!,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Text(
+                                "${oficina["rating"]} ⭐",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          /// ENDEREÇO
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on,
+                                size: 18,
+                                color: Colors.grey.shade700,
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  oficina["address"]!,
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 8),
+
+                          /// TIPO
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.car_repair,
+                                size: 18,
+                                color: Colors.grey.shade700,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                oficina["type"]!,
+                                style: const TextStyle(
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 10),
+
+                          /// STATUS + DISTÂNCIA
+                          Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                  borderRadius:
+                                      BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  oficina["status"]!,
+                                  style: const TextStyle(
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                oficina["distance"]!,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+
+                          const SizedBox(height: 12),
+
+                          /// BOTÕES
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+
+                              /// DETALHES
+                              Container(
+                                height: 50,
+                                width: 50,
+                                decoration: BoxDecoration(
+                                  // color: const Color.fromARGB(255, 236, 236, 234),
+                                  
+                                  borderRadius:
+                                      BorderRadius.circular(12),
+                                      
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.info_outline,
+                                    color: Color.fromARGB(221, 211, 75, 75),
+                                    size: 22,
+                                  ),
+                                  onPressed: () =>
+                                      _mostrarDetalhes(
+                                          context, oficina),
+                                ),
+                              ),
+
+                              const SizedBox(width: 8),
+
+                              /// COMPARTILHAR
+                              Container(
+                                // decoration: BoxDecoration(
+                                //   color: Colors.grey.shade800,
+                                //   borderRadius:
+                                //       BorderRadius.circular(12),
+                                // ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.share,
+                                    color: Color.fromARGB(255, 163, 58, 58),
+                                  ),
+                                  onPressed: () =>
+                                      _compartilhar(oficina),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },
@@ -148,35 +319,55 @@ class WorkshopsScreen extends StatelessWidget {
     );
   }
 
-  void _mostraHistoria(BuildContext context, Map<String, String> spot) {
+  /// DETALHES
+  void _mostrarDetalhes(
+      BuildContext context,
+      Map<String, String> oficina,
+      ) {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text(spot["name"]!),
-        content: Text(spot["description"]!),
+        backgroundColor: Colors.grey.shade100,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        title: Text(
+          oficina["name"]!,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          oficina["history"]!,
+          style: const TextStyle(
+            height: 1.5,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Fechar"),
+            child: const Text(
+              "Fechar",
+              style: TextStyle(
+                color: Colors.black87,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  void _compartilharSpot(Map<String, String> spot) {
+  /// COMPARTILHAR
+  void _compartilhar(Map<String, String> oficina) {
     Share.share(
-      "Confira esta oficina:\n${spot["name"]}\n${spot["location"]}",
+      "🔧 Oficina Mecânica\n\n"
+      "Nome: ${oficina["name"]}\n"
+      "Endereço: ${oficina["address"]}\n"
+      "Tipo: ${oficina["type"]}",
     );
   }
-
-  void _abrirRotaSpot(Map<String, String> spot) async {
-    final url =
-        'https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(spot["location"]!)}';
-
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url));
-    }
-  }
 }
+
+
 
