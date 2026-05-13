@@ -21,6 +21,11 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'App Cadastro Flutter',
       theme: ThemeData(
+        textSelectionTheme: const TextSelectionThemeData(
+  cursorColor: Colors.red,
+  selectionColor: Colors.redAccent,
+  selectionHandleColor: Colors.red,
+),
         primarySwatch: Colors.indigo,
         useMaterial3: true,
       ),

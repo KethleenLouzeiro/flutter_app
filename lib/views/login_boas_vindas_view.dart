@@ -17,11 +17,28 @@ class _LoginViewState extends State<LoginView> {
   final _emailController = TextEditingController();
   final _senhaController = TextEditingController();
 
+  /// 🔥 FOCUS NODES
+  final _emailFocus = FocusNode();
+  final _senhaFocus = FocusNode();
+
   bool _isLoading = false;
   bool _manterConectado = false;
 
   void _login() async {
-    if (!_formKey.currentState!.validate()) return;
+
+    if (!_formKey.currentState!.validate()) {
+
+      if (_emailController.text.isEmpty) {
+        FocusScope.of(context)
+            .requestFocus(_emailFocus);
+
+      } else if (_senhaController.text.isEmpty) {
+        FocusScope.of(context)
+            .requestFocus(_senhaFocus);
+      }
+
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -29,13 +46,19 @@ class _LoginViewState extends State<LoginView> {
     final senha = _senhaController.text.trim();
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+
+      await FirebaseAuth.instance
+          .signInWithEmailAndPassword(
         email: email,
         password: senha,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login realizado: $email')),
+        SnackBar(
+          content: Text(
+            'Login realizado: $email',
+          ),
+        ),
       );
 
       Navigator.pushReplacement(
@@ -44,19 +67,86 @@ class _LoginViewState extends State<LoginView> {
           builder: (_) => const DashboardView(),
         ),
       );
+
     } catch (e) {
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erro ao fazer login')),
+        const SnackBar(
+          content: Text(
+            'Erro ao fazer login',
+          ),
+        ),
       );
+
     } finally {
       setState(() => _isLoading = false);
     }
+  }
+
+  /// 🔥 DECORAÇÃO DOS CAMPOS
+  InputDecoration _decoracaoCampo(String texto) {
+    return InputDecoration(
+      hintText: texto,
+
+      filled: true,
+      fillColor: Colors.white.withOpacity(0.9),
+
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: BorderSide.none,
+      ),
+
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: BorderSide.none,
+      ),
+
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: const BorderSide(
+          color: Colors.white,
+          width: 2,
+        ),
+      ),
+
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: const BorderSide(
+          color: Colors.redAccent,
+          width: 1.5,
+        ),
+      ),
+
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: const BorderSide(
+          color: Colors.redAccent,
+          width: 2,
+        ),
+      ),
+
+      errorStyle: const TextStyle(
+        color: Color.fromARGB(255, 252, 0, 0),
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+      ),
+
+      contentPadding:
+          const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 18,
+      ),
+    );
   }
 
   @override
   void dispose() {
     _emailController.dispose();
     _senhaController.dispose();
+
+    _emailFocus.dispose();
+    _senhaFocus.dispose();
+
     super.dispose();
   }
 
@@ -72,7 +162,9 @@ class _LoginViewState extends State<LoginView> {
 
             child: SingleChildScrollView(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+
                 children: [
                   _header(),
                   _form(context),
@@ -86,7 +178,9 @@ class _LoginViewState extends State<LoginView> {
   }
 
   /// 🔥 FUNDO COM IMAGEM
-  Widget _background({required Widget child}) {
+  Widget _background({
+    required Widget child,
+  }) {
     return Stack(
       children: [
 
@@ -111,7 +205,12 @@ class _LoginViewState extends State<LoginView> {
   /// 🔥 HEADER COM LOGO
   Widget _header() {
     return Padding(
-      padding: const EdgeInsets.only(top: 50, bottom: 20),
+      padding:
+          const EdgeInsets.only(
+        top: 50,
+        bottom: 20,
+      ),
+
       child: Center(
         child: Column(
           children: [
@@ -129,7 +228,8 @@ class _LoginViewState extends State<LoginView> {
               style: TextStyle(
                 fontSize: 28,
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                    FontWeight.bold,
               ),
             ),
           ],
@@ -143,146 +243,139 @@ class _LoginViewState extends State<LoginView> {
       padding: EdgeInsets.only(
         left: 32,
         right: 32,
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+        bottom:
+            MediaQuery.of(context)
+                .viewInsets
+                .bottom,
       ),
 
       child: Column(
         children: [
 
-          /// EMAIL
+          /// 🔥 EMAIL
           TextFormField(
             controller: _emailController,
 
-            decoration: InputDecoration(
-              hintText: 'Digite seu e-mail',
+            focusNode: _emailFocus,
 
-              filled: true,
-              fillColor: Colors.white.withOpacity(0.9),
+            autovalidateMode:
+                AutovalidateMode
+                    .onUserInteraction,
 
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: BorderSide.none,
-              ),
+            cursorColor: Colors.red,
 
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(
-                  color: Colors.red,
-                  width: 2,
-                ),
-              ),
+            style: const TextStyle(
+              color: Colors.black,
+            ),
 
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(
-                  color: Colors.redAccent,
-                  width: 2,
-                ),
-              ),
-
-              errorStyle: const TextStyle(
-                height: 0,
-                color: Colors.transparent,
-              ),
-
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 20),
+            decoration:
+                _decoracaoCampo(
+              'Digite seu e-mail',
             ),
 
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return '';
+
+              if (value == null ||
+                  value.isEmpty) {
+
+                return 'Digite seu email';
               }
+
+              if (!value.contains('@')) {
+                return 'Email inválido';
+              }
+
               return null;
             },
           ),
 
           const SizedBox(height: 16),
 
-          /// SENHA
+          /// 🔥 SENHA
           TextFormField(
             controller: _senhaController,
             obscureText: true,
 
-            decoration: InputDecoration(
-              hintText: 'Senha',
+            focusNode: _senhaFocus,
 
-              filled: true,
-              fillColor: Colors.white.withOpacity(0.9),
+            autovalidateMode:
+                AutovalidateMode
+                    .onUserInteraction,
 
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: BorderSide.none,
-              ),
+            cursorColor: Colors.red,
 
-              errorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(
-                  color: Colors.red,
-                  width: 2,
-                ),
-              ),
+            style: const TextStyle(
+              color: Colors.black,
+            ),
 
-              focusedErrorBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(30),
-                borderSide: const BorderSide(
-                  color: Colors.redAccent,
-                  width: 2,
-                ),
-              ),
-
-              errorStyle: const TextStyle(
-                height: 0,
-                color: Colors.transparent,
-              ),
-
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 20),
+            decoration:
+                _decoracaoCampo(
+              'Senha',
             ),
 
             validator: (value) {
-              if (value == null || value.isEmpty) {
-                return '';
+
+              if (value == null ||
+                  value.isEmpty) {
+
+                return 'Digite sua senha';
               }
+
               return null;
             },
           ),
 
           const SizedBox(height: 10),
 
-          /// CHECKBOX + ESQUECI
+          /// 🔥 CHECKBOX + ESQUECI
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment:
+                MainAxisAlignment
+                    .spaceBetween,
+
             children: [
 
               Row(
                 children: [
+
                   Checkbox(
-                    value: _manterConectado,
+                    value:
+                        _manterConectado,
+
                     onChanged: (value) {
                       setState(() {
-                        _manterConectado = value!;
+                        _manterConectado =
+                            value!;
                       });
                     },
 
-                    side: const BorderSide(
+                    side:
+                        const BorderSide(
                       color: Colors.white,
                       width: 2,
                     ),
 
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4),
+                    shape:
+                        RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(
+                        4,
+                      ),
                     ),
 
-                    activeColor: Colors.white,
-                    checkColor: Colors.black,
+                    activeColor:
+                        Colors.white,
+
+                    checkColor:
+                        Colors.black,
                   ),
 
                   const Text(
                     'Manter conectado',
                     style: TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight:
+                          FontWeight.bold,
                       fontSize: 14,
                     ),
                   ),
@@ -291,14 +384,17 @@ class _LoginViewState extends State<LoginView> {
 
               TextButton(
                 onPressed: () {
-                  print('Esqueceu a senha');
+                  print(
+                    'Esqueceu a senha',
+                  );
                 },
 
                 child: const Text(
                   'Esqueceu a senha?',
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                    fontWeight:
+                        FontWeight.bold,
                     fontSize: 15,
                   ),
                 ),
@@ -308,55 +404,88 @@ class _LoginViewState extends State<LoginView> {
 
           const SizedBox(height: 20),
 
-          /// BOTÃO ENTRAR
+          /// 🔥 BOTÃO ENTRAR
           SizedBox(
             width: double.infinity,
             height: 55,
 
             child: DecoratedBox(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
+                borderRadius:
+                    BorderRadius.circular(
+                  30,
+                ),
 
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.35),
+                    color: Colors.blue
+                        .withOpacity(
+                      0.35,
+                    ),
+
                     blurRadius: 14,
-                    offset: const Offset(0, 6),
+
+                    offset:
+                        const Offset(
+                      0,
+                      6,
+                    ),
                   ),
                 ],
 
-                gradient: const LinearGradient(
+                gradient:
+                    const LinearGradient(
                   colors: [
                     Color(0xFF2D9CFF),
                     Color(0xFF5B6DFF),
                   ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
+
+                  begin:
+                      Alignment.centerLeft,
+
+                  end:
+                      Alignment.centerRight,
                 ),
               ),
 
               child: ElevatedButton(
-                onPressed: _isLoading ? null : _login,
+                onPressed: _isLoading
+                    ? null
+                    : _login,
 
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
+                style:
+                    ElevatedButton.styleFrom(
+                  backgroundColor:
+                      Colors.transparent,
 
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
+                  shadowColor:
+                      Colors.transparent,
+
+                  shape:
+                      RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(
+                      30,
+                    ),
                   ),
                 ),
 
                 child: _isLoading
                     ? const CircularProgressIndicator(
-                        color: Colors.white,
+                        color:
+                            Colors.white,
                       )
                     : const Text(
                         'ENTRAR',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                          color:
+                              Colors.white,
+
+                          fontWeight:
+                              FontWeight.bold,
+
                           fontSize: 16,
+
                           letterSpacing: 1,
                         ),
                       ),
@@ -370,60 +499,96 @@ class _LoginViewState extends State<LoginView> {
             'OU',
             style: TextStyle(
               color: Colors.white,
-              fontWeight: FontWeight.bold,
+              fontWeight:
+                  FontWeight.bold,
               fontSize: 18,
             ),
           ),
 
           const SizedBox(height: 15),
 
-          /// GOOGLE LOGIN
+          /// 🔥 GOOGLE LOGIN
           SizedBox(
             width: double.infinity,
             height: 55,
 
             child: OutlinedButton(
               onPressed: () async {
-                setState(() => _isLoading = true);
+
+                setState(
+                  () => _isLoading = true,
+                );
 
                 try {
-                  final user = await AuthService().signInWithGoogle();
 
-                  if (user != null && mounted) {
+                  final user =
+                      await AuthService()
+                          .signInWithGoogle();
+
+                  if (user != null &&
+                      mounted) {
+
                     Navigator.push(
                       context,
+
                       MaterialPageRoute(
-                        builder: (_) => const DashboardView(),
+                        builder: (_) =>
+                            const DashboardView(),
                       ),
                     );
+
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
+
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(
                       const SnackBar(
-                        content: Text('Login cancelado'),
+                        content: Text(
+                          'Login cancelado',
+                        ),
                       ),
                     );
                   }
+
                 } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erro: $e')),
+
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Erro: $e',
+                      ),
+                    ),
                   );
                 }
 
-                setState(() => _isLoading = false);
+                setState(
+                  () => _isLoading = false,
+                );
               },
 
-              style: OutlinedButton.styleFrom(
-                backgroundColor: Colors.white,
+              style:
+                  OutlinedButton.styleFrom(
+                backgroundColor:
+                    Colors.white,
 
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
+                shape:
+                    RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(
+                    30,
+                  ),
                 ),
 
                 side: BorderSide.none,
               ),
 
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment:
+                    MainAxisAlignment
+                        .center,
+
                 children: [
 
                   /// GOOGLE ICON
@@ -432,13 +597,19 @@ class _LoginViewState extends State<LoginView> {
                     width: 40,
                   ),
 
-                  const SizedBox(width: 12),
+                  const SizedBox(
+                    width: 12,
+                  ),
 
                   const Text(
                     'Entrar com Google',
                     style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold,
+                      color:
+                          Colors.black,
+
+                      fontWeight:
+                          FontWeight.bold,
+
                       fontSize: 18,
                     ),
                   ),
@@ -449,13 +620,16 @@ class _LoginViewState extends State<LoginView> {
 
           const SizedBox(height: 20),
 
-          /// CADASTRO
+          /// 🔥 CADASTRO
           TextButton(
             onPressed: () {
+
               Navigator.push(
                 context,
+
                 MaterialPageRoute(
-                  builder: (_) => const CadastroView(),
+                  builder: (_) =>
+                      const CadastroView(),
                 ),
               );
             },
@@ -464,7 +638,8 @@ class _LoginViewState extends State<LoginView> {
               'Não tem uma conta? CADASTRE-SE',
               style: TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                    FontWeight.bold,
                 fontSize: 14,
               ),
             ),
