@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter_app/views/login_boas_vindas_view.dart';
 
@@ -13,18 +12,30 @@ class _SplashViewState extends State<SplashView>
     with SingleTickerProviderStateMixin {
 
   late AnimationController _controller;
+  late Animation<double> _fade;
+  late Animation<double> _scale;
 
   @override
   void initState() {
     super.initState();
 
+    // 🔥 ANIMAÇÃO
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 1),
+      duration: const Duration(seconds: 2),
     );
 
-    _controller.repeat(reverse: true);
+    _fade = Tween(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
 
+    _scale = Tween(begin: 0.9, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+
+    _controller.forward();
+
+    // 🔄 NAVEGAÇÃO
     Future.delayed(const Duration(seconds: 3), () {
       if (!mounted) return;
 
@@ -37,7 +48,6 @@ class _SplashViewState extends State<SplashView>
     });
   }
 
-  // Opcional: melhora carregamento da imagem
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -56,69 +66,48 @@ class _SplashViewState extends State<SplashView>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: Container(
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                Color(0xFF6366F1),
-                Color(0xFF1E293B),
-              ],
+      body: Stack(
+        children: [
+
+          // 🔹 FUNDO
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/planodefundo.png',
+              fit: BoxFit.cover,
             ),
           ),
-          child: Stack(
-            children: [
 
-              // Logo no topo
-              Positioned.fill(
+          // 🔹 OVERLAY GRADIENTE (mais bonito)
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.white.withOpacity(0.7),
+                  Colors.white.withOpacity(0.5),
+                ],
+              ),
+            ),
+          ),
+
+          // 🔥 LOGO ANIMADA
+          Center(
+            child: FadeTransition(
+              opacity: _fade,
+              child: ScaleTransition(
+                scale: _scale,
                 child: Image.asset(
                   'assets/images/logo.png',
-                  fit: BoxFit.contain,
-                  alignment: Alignment.topCenter,
+                  width: MediaQuery.of(context).size.width * 0.9,
                 ),
               ),
-
-              // Ícone animado
-              Positioned(
-                bottom: 100,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: AnimatedBuilder(
-                    animation: _controller,
-                    builder: (context, child) {
-                      double scale = 1 + (_controller.value * 0.3);
-
-                      return Transform.scale(
-                        scale: scale,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.orange.withOpacity(0.6),
-                                blurRadius: 28 * _controller.value,
-                                spreadRadius: 2,
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.location_on,
-                            size: 60,
-                            color: Colors.orange,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+
+          // 🔄 LOADING DISCRETO (opcional)
+
+        ],
       ),
     );
   }
