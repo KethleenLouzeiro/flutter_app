@@ -18,11 +18,38 @@ class _CadastroViewState extends State<CadastroView> {
   final _senhaController = TextEditingController();
   final _confirmarSenhaController = TextEditingController();
 
+  /// 🔥 FOCUS NODES
+  final _nomeFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _senhaFocus = FocusNode();
+  final _confirmarFocus = FocusNode();
+
   bool _isLoading = false;
   bool _aceitouTermos = false;
 
   Future<void> _cadastrar() async {
-    if (!_formKey.currentState!.validate()) return;
+
+    if (!_formKey.currentState!.validate()) {
+
+      if (_nomeController.text.isEmpty) {
+        FocusScope.of(context)
+            .requestFocus(_nomeFocus);
+
+      } else if (_emailController.text.isEmpty) {
+        FocusScope.of(context)
+            .requestFocus(_emailFocus);
+
+      } else if (_senhaController.text.length < 6) {
+        FocusScope.of(context)
+            .requestFocus(_senhaFocus);
+
+      } else if (_confirmarSenhaController.text.isEmpty) {
+        FocusScope.of(context)
+            .requestFocus(_confirmarFocus);
+      }
+
+      return;
+    }
 
     /// 🔥 TERMOS
     if (!_aceitouTermos) {
@@ -54,6 +81,7 @@ class _CadastroViewState extends State<CadastroView> {
     setState(() => _isLoading = true);
 
     try {
+
       UserCredential userCredential =
           await FirebaseAuth.instance
               .createUserWithEmailAndPassword(
@@ -76,13 +104,12 @@ class _CadastroViewState extends State<CadastroView> {
       Navigator.pop(context);
 
     } on FirebaseAuthException catch (e) {
+
       String erro = 'Erro ao cadastrar';
 
-      /// 🔥 EMAIL JÁ EXISTE
       if (e.code == 'email-already-in-use') {
         erro = 'Email já está em uso';
 
-      /// 🔥 SENHA FRACA
       } else if (e.code == 'weak-password') {
         erro = 'Senha muito fraca';
       }
@@ -96,6 +123,7 @@ class _CadastroViewState extends State<CadastroView> {
     }
   }
 
+  /// 🔥 DECORAÇÃO DOS CAMPOS
   InputDecoration _decoracaoCampo(String texto) {
     return InputDecoration(
       hintText: texto,
@@ -108,11 +136,24 @@ class _CadastroViewState extends State<CadastroView> {
         borderSide: BorderSide.none,
       ),
 
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: BorderSide.none,
+      ),
+
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(30),
+        borderSide: const BorderSide(
+          color: Colors.white,
+          width: 2,
+        ),
+      ),
+
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: const BorderSide(
-          color: Colors.red,
-          width: 2,
+          color: Colors.redAccent,
+          width: 1.5,
         ),
       ),
 
@@ -125,12 +166,16 @@ class _CadastroViewState extends State<CadastroView> {
       ),
 
       errorStyle: const TextStyle(
-        height: 0,
-        color: Colors.transparent,
+        color: Color.fromARGB(255, 252, 0, 0),
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
       ),
 
       contentPadding:
-          const EdgeInsets.symmetric(horizontal: 20),
+          const EdgeInsets.symmetric(
+        horizontal: 20,
+        vertical: 18,
+      ),
     );
   }
 
@@ -140,6 +185,12 @@ class _CadastroViewState extends State<CadastroView> {
     _nomeController.dispose();
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
+
+    _nomeFocus.dispose();
+    _emailFocus.dispose();
+    _senhaFocus.dispose();
+    _confirmarFocus.dispose();
+
     super.dispose();
   }
 
@@ -229,9 +280,19 @@ class _CadastroViewState extends State<CadastroView> {
 
                       const SizedBox(height: 12),
 
-                      /// NOME
+                      /// 🔥 NOME
                       TextFormField(
                         controller: _nomeController,
+                        focusNode: _nomeFocus,
+
+                        autovalidateMode:
+                            AutovalidateMode.onUserInteraction,
+
+                        cursorColor: Colors.red,
+
+                        style: const TextStyle(
+                          color: Colors.black,
+                        ),
 
                         decoration:
                             _decoracaoCampo(
@@ -240,17 +301,28 @@ class _CadastroViewState extends State<CadastroView> {
 
                         validator: (v) {
                           if (v == null || v.isEmpty) {
-                            return '';
+                            return 'Digite seu nome';
                           }
+
                           return null;
                         },
                       ),
 
                       const SizedBox(height: 12),
 
-                      /// EMAIL
+                      /// 🔥 EMAIL
                       TextFormField(
                         controller: _emailController,
+                        focusNode: _emailFocus,
+
+                        autovalidateMode:
+                            AutovalidateMode.onUserInteraction,
+
+                        cursorColor: Colors.red,
+
+                        style: const TextStyle(
+                          color: Colors.black,
+                        ),
 
                         decoration:
                             _decoracaoCampo(
@@ -258,19 +330,36 @@ class _CadastroViewState extends State<CadastroView> {
                         ),
 
                         validator: (v) {
+
                           if (v == null || v.isEmpty) {
-                            return '';
+                            return 'Digite seu email';
                           }
+
+                          if (!v.contains('@')) {
+                            return 'Email inválido';
+                          }
+
                           return null;
                         },
                       ),
 
                       const SizedBox(height: 12),
 
-                      /// SENHA
+                      /// 🔥 SENHA
                       TextFormField(
                         controller: _senhaController,
                         obscureText: true,
+
+                        focusNode: _senhaFocus,
+
+                        autovalidateMode:
+                            AutovalidateMode.onUserInteraction,
+
+                        cursorColor: Colors.red,
+
+                        style: const TextStyle(
+                          color: Colors.black,
+                        ),
 
                         decoration:
                             _decoracaoCampo(
@@ -278,22 +367,38 @@ class _CadastroViewState extends State<CadastroView> {
                         ),
 
                         validator: (v) {
-                          if (v == null ||
-                              v.length < 6) {
-                            return '';
+
+                          if (v == null || v.isEmpty) {
+                            return 'Digite sua senha';
                           }
+
+                          if (v.length < 6) {
+                            return 'Mínimo 6 caracteres';
+                          }
+
                           return null;
                         },
                       ),
 
                       const SizedBox(height: 12),
 
-                      /// CONFIRMAR SENHA
+                      /// 🔥 CONFIRMAR SENHA
                       TextFormField(
                         controller:
                             _confirmarSenhaController,
 
                         obscureText: true,
+
+                        focusNode: _confirmarFocus,
+
+                        autovalidateMode:
+                            AutovalidateMode.onUserInteraction,
+
+                        cursorColor: Colors.red,
+
+                        style: const TextStyle(
+                          color: Colors.black,
+                        ),
 
                         decoration:
                             _decoracaoCampo(
@@ -301,16 +406,18 @@ class _CadastroViewState extends State<CadastroView> {
                         ),
 
                         validator: (v) {
+
                           if (v == null || v.isEmpty) {
-                            return '';
+                            return 'Confirme sua senha';
                           }
+
                           return null;
                         },
                       ),
 
                       const SizedBox(height: 16),
 
-                      /// TERMOS
+                      /// 🔥 TERMOS
                       const Text(
                         'Ao se cadastrar você aceita os termos e privacidade',
                         textAlign: TextAlign.center,
@@ -323,7 +430,7 @@ class _CadastroViewState extends State<CadastroView> {
 
                       const SizedBox(height: 6),
 
-                      /// CHECKBOX
+                      /// 🔥 CHECKBOX
                       Row(
                         children: [
 
@@ -370,7 +477,7 @@ class _CadastroViewState extends State<CadastroView> {
 
                       const SizedBox(height: 18),
 
-                      /// BOTÃO CRIAR
+                      /// 🔥 BOTÃO CRIAR
                       SizedBox(
                         width: double.infinity,
                         height: 55,
@@ -442,8 +549,7 @@ class _CadastroViewState extends State<CadastroView> {
                                       color:
                                           Colors.white,
                                       fontWeight:
-                                          FontWeight
-                                              .bold,
+                                          FontWeight.bold,
                                       fontSize: 18,
                                     ),
                                   ),
@@ -465,39 +571,57 @@ class _CadastroViewState extends State<CadastroView> {
 
                       const SizedBox(height: 12),
 
-                      /// GOOGLE BUTTON
+                      /// 🔥 GOOGLE BUTTON
                       SizedBox(
                         width: double.infinity,
                         height: 55,
 
                         child: OutlinedButton(
                           onPressed: () async {
-                                setState(() => _isLoading = true);
 
-                try {
-                  final user = await AuthService().signInWithGoogle();
+                            setState(() => _isLoading = true);
 
-                  if (user != null && mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const DashboardView(),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Cadastro cancelado'),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erro: $e')),
-                  );
-                }
+                            try {
 
-                setState(() => _isLoading = false);
+                              final user =
+                                  await AuthService()
+                                      .signInWithGoogle();
+
+                              if (user != null && mounted) {
+
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const DashboardView(),
+                                  ),
+                                );
+
+                              } else {
+
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Cadastro cancelado',
+                                    ),
+                                  ),
+                                );
+                              }
+
+                            } catch (e) {
+
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Erro: $e',
+                                  ),
+                                ),
+                              );
+                            }
+
+                            setState(() => _isLoading = false);
                           },
 
                           style:
