@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'views/Splash_View.dart'; // import da tela
+import 'views/splash_view.dart'; // import da tela
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+const String accessToken =
+    String.fromEnvironment('MAPBOX_ACCESS_TOKEN');
   runApp(const MyApp());
 }
 

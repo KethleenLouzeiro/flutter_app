@@ -1,56 +1,106 @@
-import 'package:firebase_auth/firebase_auth.dart'; 
-import 'package:google_sign_in/google_sign_in.dart'; 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
- 
+class AuthService {
 
-class AuthService { 
+  final FirebaseAuth _auth =
+      FirebaseAuth.instance;
 
-  final FirebaseAuth _auth = FirebaseAuth.instance; 
+  /// 🔥 CADASTRO COM GOOGLE
+  Future<UserCredential?> signInWithGoogle() async {
 
- 
+    try {
 
-  Future<UserCredential?> signInWithGoogle() async { 
+      /// 🔥 GOOGLE SIGN IN
+      final GoogleSignIn googleSignIn =
+          GoogleSignIn();
 
-    try { 
+      /// 🔥 MOSTRA SELETOR DE CONTAS
+      await googleSignIn.signOut();
 
-      final GoogleSignInAccount? googleUser = 
+      /// 🔥 ESCOLHER CONTA
+      final GoogleSignInAccount? googleUser =
+          await googleSignIn.signIn();
 
-          await GoogleSignIn().signIn(); 
+      if (googleUser == null) return null;
 
- 
+      /// 🔥 AUTH GOOGLE
+      final GoogleSignInAuthentication
+          googleAuth =
+              await googleUser.authentication;
 
-      if (googleUser == null) return null; 
+      /// 🔥 CREDENCIAL
+      final credential =
+          GoogleAuthProvider.credential(
+        accessToken:
+            googleAuth.accessToken,
 
- 
+        idToken:
+            googleAuth.idToken,
+      );
 
-      final GoogleSignInAuthentication googleAuth = 
+      /// 🔥 LOGIN FIREBASE
+      return await _auth
+          .signInWithCredential(
+        credential,
+      );
 
-          await googleUser.authentication; 
+    } catch (e) {
 
- 
+      print(
+        "Erro no cadastro Google: $e",
+      );
 
-      final credential = GoogleAuthProvider.credential( 
+      rethrow;
+    }
+  }
 
-        accessToken: googleAuth.accessToken, 
+  /// 🔥 LOGIN COM GOOGLE
+  Future<UserCredential?> loginWithGoogle() async {
 
-        idToken: googleAuth.idToken, 
+    try {
 
-      ); 
+      /// 🔥 GOOGLE SIGN IN
+      final GoogleSignIn googleSignIn =
+          GoogleSignIn();
 
- 
+      /// 🔥 MOSTRA SELETOR DE CONTAS
+      await googleSignIn.signOut();
 
-      return await _auth.signInWithCredential(credential); 
+      /// 🔥 ESCOLHER CONTA
+      final GoogleSignInAccount? googleUser =
+          await googleSignIn.signIn();
 
-    } catch (e) { 
+      if (googleUser == null) return null;
 
-      print("Erro no login: $e"); 
+      /// 🔥 AUTH GOOGLE
+      final GoogleSignInAuthentication
+          googleAuth =
+              await googleUser.authentication;
 
-      return null; 
+      /// 🔥 CREDENCIAL
+      final credential =
+          GoogleAuthProvider.credential(
+        accessToken:
+            googleAuth.accessToken,
 
-    } 
+        idToken:
+            googleAuth.idToken,
+      );
 
-  } 
+      /// 🔥 LOGIN FIREBASE
+      return await _auth
+          .signInWithCredential(
+        credential,
+      );
 
-} 
+    } catch (e) {
 
- 
+      print(
+        "Erro no login Google: $e",
+      );
+
+      rethrow;
+    }
+  }
+}

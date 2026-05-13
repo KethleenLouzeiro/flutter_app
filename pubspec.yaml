@@ -39,6 +39,7 @@ dependencies:
   firebase_core: ^4.7.0
   firebase_auth: ^6.3.0
   google_sign_in: ^6.2.1 
+  mapbox_maps_flutter: ^2.6.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
