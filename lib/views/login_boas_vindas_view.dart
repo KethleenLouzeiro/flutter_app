@@ -3,6 +3,7 @@ import 'cadastro_view.dart';
 import 'dashboard_view.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
+import 'recuperar_senha_view.dart';
 
 class LoginView extends StatefulWidget {
   const LoginView({super.key});
@@ -383,11 +384,17 @@ class _LoginViewState extends State<LoginView> {
               ),
 
               TextButton(
-                onPressed: () {
-                  print(
-                    'Esqueceu a senha',
-                  );
-                },
+onPressed: () {
+
+  Navigator.push(
+    context,
+
+    MaterialPageRoute(
+      builder: (_) =>
+          const RecuperarSenhaView(),
+    ),
+  );
+},
 
                 child: const Text(
                   'Esqueceu a senha?',
@@ -523,7 +530,7 @@ class _LoginViewState extends State<LoginView> {
 
                   final user =
                       await AuthService()
-                          .signInWithGoogle();
+                          .loginWithGoogle();
 
                   if (user != null &&
                       mounted) {
@@ -550,18 +557,33 @@ class _LoginViewState extends State<LoginView> {
                     );
                   }
 
-                } catch (e) {
+                } on FirebaseAuthException catch (e) {
 
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Erro: $e',
-                      ),
-                    ),
-                  );
-                }
+  if (e.code == 'google-not-found') {
+
+    ScaffoldMessenger.of(context)
+        .showSnackBar(
+
+      const SnackBar(
+        content: Text(
+          'Esse login Google não existe',
+        ),
+      ),
+    );
+
+    return;
+  }
+
+  ScaffoldMessenger.of(context)
+      .showSnackBar(
+
+    SnackBar(
+      content: Text(
+        'Erro: ${e.message}',
+      ),
+    ),
+  );
+}
 
                 setState(
                   () => _isLoading = false,

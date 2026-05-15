@@ -656,7 +656,7 @@ class _CadastroViewState extends State<CadastroView> {
                               ),
 
                               const Text(
-                                'Criar com Google',
+                                'Entrar com Google',
                                 style: TextStyle(
                                   color:
                                       Colors.black,
