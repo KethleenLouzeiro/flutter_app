@@ -11,6 +11,8 @@ import 'package:flutter_app/views/restaurantes_view.dart';
 import 'package:flutter_app/views/hoteis_view.dart'; 
 import 'package:flutter_app/views/hospitais_view.dart';
 import 'package:flutter_app/views/pets_view.dart'; 
+import 'package:flutter_app/views/terminalhidroviario_view.dart';
+
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
 
@@ -118,6 +120,17 @@ class _DashboardViewState extends State<DashboardView> {
               ),
             );
           }),
+
+          _drawerItem(Icons.directions_boat, "Terminal Hidroviário", Colors.blue, () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => TerminalHidroviarioScreen(),
+              ),
+            );
+          }),
+
+          
 
             const Divider(),
 
