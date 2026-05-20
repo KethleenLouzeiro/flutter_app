@@ -2,10 +2,10 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+// import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 
 import 'package:flutter_app/models/map_point.dart';
-import 'package:flutter_app/services/map_service.dart';
+// import 'package:flutter_app/services/map_service.dart';
 import 'package:flutter_app/views/excluir_view.dart';
 import 'package:flutter_app/views/ajuda_suporte_view.dart';
 import 'package:flutter_app/views/politica_privacidade_view.dart';
@@ -31,55 +31,6 @@ class DashboardView extends StatefulWidget {
 class _DashboardViewState
     extends State<DashboardView> {
 
-  int _selectedIndex = 0;
-  final List<MapPoint> _mapPoints =
-      const MapService().getInitialParaPoints();
-
-  MapboxMap? _mapboxMap;
-  PointAnnotationManager? _pointAnnotationManager;
-  final Map<MapPointCategory, Uint8List> _markerImages = {};
-
-  Future<void> _onMapCreated(MapboxMap mapboxMap) async {
-    _mapboxMap = mapboxMap;
-    _pointAnnotationManager =
-        await mapboxMap.annotations.createPointAnnotationManager();
-    await _prepareMarkerImages();
-    await _addMapPoints();
-  }
-
-  Future<void> _prepareMarkerImages() async {
-    if (_markerImages.isNotEmpty) return;
-
-    for (final category in MapPointCategory.values) {
-      _markerImages[category] = await _createMarkerImage(
-        color: _mapPointColor(category),
-        icon: _mapPointIcon(category),
-      );
-    }
-  }
-
-  Future<void> _addMapPoints() async {
-    final manager = _pointAnnotationManager;
-    if (manager == null) return;
-
-    await manager.deleteAll();
-
-    for (final point in _mapPoints) {
-      await manager.create(
-        PointAnnotationOptions(
-          geometry: Point(
-            coordinates: Position(
-              point.longitude,
-              point.latitude,
-            ),
-          ),
-          image: _markerImages[point.category],
-          iconAnchor: IconAnchor.CENTER,
-          iconSize: 0.72,
-        ),
-      );
-    }
-  }
 
   Future<Uint8List> _createMarkerImage({
     required Color color,
@@ -142,20 +93,6 @@ class _DashboardViewState
     );
 
     return byteData!.buffer.asUint8List();
-  }
-
-  Future<void> _focusPara() async {
-    await _mapboxMap?.setCamera(
-      CameraOptions(
-        center: Point(
-          coordinates: Position(
-            -52.0,
-            -3.7,
-          ),
-        ),
-        zoom: 5,
-      ),
-    );
   }
 
   @override
@@ -410,7 +347,7 @@ class _DashboardViewState
   /// 🔹 CORPO
   Widget _buildBody() {
 
-    switch (_selectedIndex) {
+    switch (0) {
 
       case 0:
         return _buildMapa();
@@ -434,31 +371,31 @@ class _DashboardViewState
       children: [
 
         /// 🔥 MAPA
-        MapWidget(
-          key: const ValueKey(
-            "mapWidget",
-          ),
+        // MapWidget(
+        //   key: const ValueKey(
+        //     "mapWidget",
+        //   ),
 
-          // ignore: deprecated_member_use
-          cameraOptions:
-              CameraOptions(
+        //   // ignore: deprecated_member_use
+        //   cameraOptions:
+        //       CameraOptions(
 
-            center: Point(
-              coordinates:
-                  Position(
-                -52.0,
-                -3.7,
-              ),
-            ),
+        //     center: Point(
+        //       coordinates:
+        //           Position(
+        //         -52.0,
+        //         -3.7,
+        //       ),
+        //     ),
 
-            zoom: 5,
-          ),
+        //     zoom: 5,
+        //   ),
 
-          styleUri:
-              MapboxStyles.LIGHT,
+        //   styleUri:
+        //       MapboxStyles.LIGHT,
 
-          onMapCreated: _onMapCreated,
-        ),
+        //   onMapCreated: _onMapCreated,
+        // ),
 
         /// 🔥 TOPO
         SafeArea(
@@ -587,27 +524,27 @@ class _DashboardViewState
           right: 15,
 
           child: GestureDetector(
-            onTap: _focusPara,
-            child: Container(
-              width: 50,
-              height: 50,
+            // onTap: _focusPara,
+            // child: Container(
+            //   width: 50,
+            //   height: 50,
 
-              decoration: BoxDecoration(
-                color: Colors.white,
+              // decoration: BoxDecoration(
+              //   color: Colors.white,
 
-                shape: BoxShape.circle,
+              //   shape: BoxShape.circle,
 
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black
-                        .withOpacity(
-                      0.2,
-                    ),
+              //   boxShadow: [
+              //     BoxShadow(
+              //       color: Colors.black
+              //           .withOpacity(
+              //         0.2,
+              //       ),
 
-                    blurRadius: 5,
-                  ),
-                ],
-              ),
+              //       blurRadius: 5,
+              //     ),
+              //   ],
+              // ),
 
               child: const Icon(
                 Icons.my_location,
@@ -615,7 +552,7 @@ class _DashboardViewState
               ),
             ),
           ),
-        ),
+        
 
         /// 🔥 BARRA INFERIOR
         Align(
