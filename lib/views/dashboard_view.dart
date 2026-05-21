@@ -542,16 +542,16 @@ Widget _buildMapa() {
         ),
       ),
 
-      /// BARRA INFERIOR
-      Align(
-        alignment:
-            Alignment.bottomCenter,
+      // /// BARRA INFERIOR
+      // Align(
+      //   alignment:
+      //       Alignment.bottomCenter,
 
-        child: Container(
-          height: 60,
-          color: Colors.blue,
-        ),
-      ),
+      //   child: Container(
+      //     height: 60,
+      //     color: Colors.blue,
+      //   ),
+      // ),
     ],
   );
 }
