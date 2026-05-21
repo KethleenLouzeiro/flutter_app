@@ -3,7 +3,8 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 // import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
-
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:flutter_app/models/map_point.dart';
 // import 'package:flutter_app/services/map_service.dart';
 import 'package:flutter_app/views/excluir_view.dart';
@@ -365,208 +366,195 @@ class _DashboardViewState
   }
 
   /// 🔥 MAPA REAL MAPBOX
-  Widget _buildMapa() {
+Widget _buildMapa() {
 
-    return Stack(
-      children: [
+  return Stack(
+    children: [
 
-        /// 🔥 MAPA
-        // MapWidget(
-        //   key: const ValueKey(
-        //     "mapWidget",
-        //   ),
+      /// MAPA OPENSTREETMAP
+      FlutterMap(
 
-        //   // ignore: deprecated_member_use
-        //   cameraOptions:
-        //       CameraOptions(
+        options: const MapOptions(
+          initialCenter: LatLng(-1.4558, -48.4902),
+          initialZoom: 5,
+        ),
 
-        //     center: Point(
-        //       coordinates:
-        //           Position(
-        //         -52.0,
-        //         -3.7,
-        //       ),
-        //     ),
+        children: [
 
-        //     zoom: 5,
-        //   ),
+          TileLayer(
+            urlTemplate:
+                'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
 
-        //   styleUri:
-        //       MapboxStyles.LIGHT,
+            userAgentPackageName:
+                'com.example.flutter_app',
+          ),
 
-        //   onMapCreated: _onMapCreated,
-        // ),
+          /// MARCADORES
+          MarkerLayer(
+            markers: [
 
-        /// 🔥 TOPO
-        SafeArea(
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 8,
-            ),
+              Marker(
+                point: LatLng(-3.7, -52.0),
 
-            child: Row(
-              children: [
+                width: 80,
+                height: 80,
 
-                /// 🔥 PESQUISA
-                Expanded(
-                  child: Container(
-                    height: 45,
-
-                    decoration:
-                        BoxDecoration(
-                      color: Colors.white,
-
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                        25,
-                      ),
-
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black
-                              .withOpacity(
-                            0.15,
-                          ),
-
-                          blurRadius: 5,
-                        ),
-                      ],
-                    ),
-
-                    child: Row(
-                      children: const [
-
-                        SizedBox(width: 12),
-
-                        Icon(
-                          Icons.menu,
-                          color:
-                              Colors.black54,
-                        ),
-
-                        SizedBox(width: 10),
-
-                        Expanded(
-                          child: Text(
-                            "Pesquise por um local",
-
-                            style: TextStyle(
-                              color:
-                                  Colors.grey,
-
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-
-                        Icon(
-                          Icons.mic,
-                          color: Colors.blue,
-                        ),
-
-                        SizedBox(width: 12),
-                      ],
-                    ),
-                  ),
+                child: const Icon(
+                  Icons.location_pin,
+                  color: Colors.red,
+                  size: 50,
                 ),
+              ),
+            ],
+          ),
+        ],
+      ),
 
-                const SizedBox(width: 10),
+      /// TOPO
+      SafeArea(
+        child: Padding(
+          padding:
+              const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 8,
+          ),
 
-                /// 🔥 PERFIL
-                Container(
-                  width: 45,
+          child: Row(
+            children: [
+
+              Expanded(
+                child: Container(
                   height: 45,
 
                   decoration:
                       BoxDecoration(
                     color: Colors.white,
 
-                    shape:
-                        BoxShape.circle,
+                    borderRadius:
+                        BorderRadius.circular(
+                      25,
+                    ),
 
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black
-                            .withOpacity(
-                          0.15,
-                        ),
+                            .withOpacity(0.15),
 
                         blurRadius: 5,
                       ),
                     ],
                   ),
 
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.blue,
+                  child: Row(
+                    children: const [
+
+                      SizedBox(width: 12),
+
+                      Icon(
+                        Icons.menu,
+                        color: Colors.black54,
+                      ),
+
+                      SizedBox(width: 10),
+
+                      Expanded(
+                        child: Text(
+                          "Pesquise por um local",
+
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+
+                      Icon(
+                        Icons.mic,
+                        color: Colors.blue,
+                      ),
+
+                      SizedBox(width: 12),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-        ),
-
-        /// 🔥 PIN CENTRAL
-        const Center(
-          child: Icon(
-            Icons.location_pin,
-            color: Colors.red,
-            size: 50,
-          ),
-        ),
-
-        /// 🔥 BOTÃO GPS
-        Positioned(
-          bottom: 90,
-          right: 15,
-
-          child: GestureDetector(
-            // onTap: _focusPara,
-            // child: Container(
-            //   width: 50,
-            //   height: 50,
-
-              // decoration: BoxDecoration(
-              //   color: Colors.white,
-
-              //   shape: BoxShape.circle,
-
-              //   boxShadow: [
-              //     BoxShadow(
-              //       color: Colors.black
-              //           .withOpacity(
-              //         0.2,
-              //       ),
-
-              //       blurRadius: 5,
-              //     ),
-              //   ],
-              // ),
-
-              child: const Icon(
-                Icons.my_location,
-                color: Colors.black,
               ),
-            ),
-          ),
-        
 
-        /// 🔥 BARRA INFERIOR
-        Align(
-          alignment:
-              Alignment.bottomCenter,
+              const SizedBox(width: 10),
 
-          child: Container(
-            height: 60,
-            color: Colors.blue,
+              Container(
+                width: 45,
+                height: 45,
+
+                decoration:
+                    BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black
+                          .withOpacity(0.15),
+
+                      blurRadius: 5,
+                    ),
+                  ],
+                ),
+
+                child: const Icon(
+                  Icons.person,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
           ),
         ),
-      ],
-    );
-  }
+      ),
+
+      /// BOTÃO GPS
+      Positioned(
+        bottom: 90,
+        right: 15,
+
+        child: Container(
+          width: 50,
+          height: 50,
+
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+
+            boxShadow: [
+              BoxShadow(
+                color:
+                    Colors.black.withOpacity(
+                  0.2,
+                ),
+
+                blurRadius: 5,
+              ),
+            ],
+          ),
+
+          child: const Icon(
+            Icons.my_location,
+            color: Colors.black,
+          ),
+        ),
+      ),
+
+      /// BARRA INFERIOR
+      Align(
+        alignment:
+            Alignment.bottomCenter,
+
+        child: Container(
+          height: 60,
+          color: Colors.blue,
+        ),
+      ),
+    ],
+  );
+}
 
   /// 🔹 DRAWER ITEM
   Widget _drawerItem(
