@@ -1,11 +1,7 @@
-import 'dart:typed_data';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
-import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
-import 'package:flutter_app/models/map_point.dart';
-import 'package:flutter_app/services/map_service.dart';
 import 'package:flutter_app/views/excluir_view.dart';
 import 'package:flutter_app/views/ajuda_suporte_view.dart';
 import 'package:flutter_app/views/politica_privacidade_view.dart';
@@ -18,6 +14,7 @@ import 'package:flutter_app/views/restaurantes_view.dart';
 import 'package:flutter_app/views/hoteis_view.dart';
 import 'package:flutter_app/views/hospitais_view.dart';
 import 'package:flutter_app/views/pets_view.dart';
+import '../data/para_locations.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -31,129 +28,18 @@ class _DashboardViewState
     extends State<DashboardView> {
 
   int _selectedIndex = 0;
-  final List<MapPoint> _mapPoints =
-      const MapService().getInitialParaPoints();
 
-  MapboxMap? _mapboxMap;
-  PointAnnotationManager? _pointAnnotationManager;
-  final Map<MapPointCategory, Uint8List> _markerImages = {};
+  final MapController _mapController =
+      MapController();
 
-  Future<void> _onMapCreated(MapboxMap mapboxMap) async {
-    _mapboxMap = mapboxMap;
-    _pointAnnotationManager =
-        await mapboxMap.annotations.createPointAnnotationManager();
-    await _prepareMarkerImages();
-    await _addMapPoints();
-  }
+  void _focusPara() {
 
-  Future<void> _prepareMarkerImages() async {
-    if (_markerImages.isNotEmpty) return;
-
-    for (final category in MapPointCategory.values) {
-      _markerImages[category] = await _createMarkerImage(
-        color: _mapPointColor(category),
-        icon: _mapPointIcon(category),
-      );
-    }
-  }
-
-  Future<void> _addMapPoints() async {
-    final manager = _pointAnnotationManager;
-    if (manager == null) return;
-
-    await manager.deleteAll();
-
-    for (final point in _mapPoints) {
-      await manager.create(
-        PointAnnotationOptions(
-          geometry: Point(
-            coordinates: Position(
-              point.longitude,
-              point.latitude,
-            ),
-          ),
-          image: _markerImages[point.category],
-          iconAnchor: IconAnchor.CENTER,
-          iconSize: 0.72,
-        ),
-      );
-    }
-  }
-
-  Future<Uint8List> _createMarkerImage({
-    required Color color,
-    required IconData icon,
-  }) async {
-    const size = 96.0;
-    const center = Offset(size / 2, size / 2);
-
-    final recorder = ui.PictureRecorder();
-    final canvas = Canvas(recorder);
-
-    final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.18)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
-
-    canvas.drawCircle(
-      center.translate(0, 5),
-      31,
-      shadowPaint,
-    );
-
-    final markerPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(center, 30, markerPaint);
-
-    final borderPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.88)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 4;
-
-    canvas.drawCircle(center, 30, borderPaint);
-
-    final iconPainter = TextPainter(
-      text: TextSpan(
-        text: String.fromCharCode(icon.codePoint),
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 34,
-          fontFamily: icon.fontFamily,
-          package: icon.fontPackage,
-        ),
+    _mapController.move(
+      LatLng(
+        -3.7,
+        -52.0,
       ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    iconPainter.paint(
-      canvas,
-      center - Offset(iconPainter.width / 2, iconPainter.height / 2),
-    );
-
-    final image = await recorder.endRecording().toImage(
-      size.toInt(),
-      size.toInt(),
-    );
-
-    final byteData = await image.toByteData(
-      format: ui.ImageByteFormat.png,
-    );
-
-    return byteData!.buffer.asUint8List();
-  }
-
-  Future<void> _focusPara() async {
-    await _mapboxMap?.setCamera(
-      CameraOptions(
-        center: Point(
-          coordinates: Position(
-            -52.0,
-            -3.7,
-          ),
-        ),
-        zoom: 5,
-      ),
+      5,
     );
   }
 
@@ -166,7 +52,6 @@ class _DashboardViewState
         title: const Text("VIAGEBEM"),
       ),
 
-      /// ✅ DRAWER
       drawer: Drawer(
         child: ListView(
           children: [
@@ -196,7 +81,6 @@ class _DashboardViewState
 
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(
                     builder: (_) =>
                         const CalendarioView(),
@@ -220,7 +104,6 @@ class _DashboardViewState
 
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(
                     builder: (_) =>
                         GasStationsScreen(),
@@ -237,7 +120,6 @@ class _DashboardViewState
 
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(
                     builder: (_) =>
                         TouristSpotsScreen(),
@@ -261,7 +143,6 @@ class _DashboardViewState
 
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(
                     builder: (_) =>
                         OficinasScreen(),
@@ -285,7 +166,6 @@ class _DashboardViewState
 
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(
                     builder: (_) =>
                         MarketsScreen(),
@@ -309,7 +189,6 @@ class _DashboardViewState
 
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(
                     builder: (_) =>
                         RestaurantsScreen(),
@@ -326,7 +205,6 @@ class _DashboardViewState
 
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(
                     builder: (_) =>
                         HotelsScreen(),
@@ -343,7 +221,6 @@ class _DashboardViewState
 
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(
                     builder: (_) =>
                         HospitalsScreen(),
@@ -360,7 +237,6 @@ class _DashboardViewState
 
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(
                     builder: (_) =>
                         PetsScreen(),
@@ -379,7 +255,6 @@ class _DashboardViewState
 
                 Navigator.push(
                   context,
-
                   MaterialPageRoute(
                     builder: (_) =>
                         const ConfiguracaoView(),
@@ -395,18 +270,12 @@ class _DashboardViewState
     );
   }
 
-  /// 🔹 CORPO
   Widget _buildBody() {
 
     switch (_selectedIndex) {
 
       case 0:
         return _buildMapa();
-
-      case 1:
-        return const Center(
-          child: Text("Busca"),
-        );
 
       default:
         return const Center(
@@ -415,211 +284,284 @@ class _DashboardViewState
     }
   }
 
-  /// 🔥 MAPA REAL MAPBOX
   Widget _buildMapa() {
 
     return Stack(
       children: [
 
-        /// 🔥 MAPA
-        MapWidget(
-          key: const ValueKey(
-            "mapWidget",
-          ),
+        FlutterMap(
 
-          // ignore: deprecated_member_use
-          cameraOptions:
-              CameraOptions(
+          mapController: _mapController,
 
-            center: Point(
-              coordinates:
-                  Position(
-                -52.0,
-                -3.7,
-              ),
+          options: MapOptions(
+
+            initialCenter: LatLng(
+              -3.7,
+              -52.0,
             ),
 
-            zoom: 5,
+            initialZoom: 13,
           ),
 
-          styleUri:
-              MapboxStyles.LIGHT,
+          children: [
 
-          onMapCreated: _onMapCreated,
+            TileLayer(
+
+              urlTemplate:
+                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+
+              userAgentPackageName:
+                  'com.example.flutter_app',
+            ),
+
+MarkerLayer(
+
+  markers:
+      paraLocations.map((location) {
+
+    return Marker(
+
+      point: location.position,
+
+      width: 55,
+      height: 55,
+
+      child: Column(
+
+        mainAxisSize:
+            MainAxisSize.min,
+
+        children: [
+
+          Container(
+
+            padding:
+                const EdgeInsets.all(5),
+
+            decoration:
+                BoxDecoration(
+
+              color: location.color,
+
+              shape: BoxShape.circle,
+            ),
+
+            child: Icon(
+              location.icon,
+
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+
+          const SizedBox(height: 2),
+
+          Text(
+            location.name,
+
+            overflow:
+                TextOverflow.ellipsis,
+
+            style: const TextStyle(
+              fontSize: 6,
+              fontWeight:
+                  FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }).toList(),
+)
+          ],
         ),
 
         /// 🔥 TOPO
-        SafeArea(
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 8,
-            ),
+        // SafeArea(
+          // child: Padding(
+          //   padding:
+          //       const EdgeInsets.symmetric(
+          //     horizontal: 10,
+          //     vertical: 8,
+          //   ),
 
-            child: Row(
-              children: [
+          //   child: Row(
+          //     children: [
 
-                /// 🔥 PESQUISA
-                Expanded(
-                  child: Container(
-                    height: 45,
+          //       Expanded(
+          //         child: Container(
+          //           height: 45,
 
-                    decoration:
-                        BoxDecoration(
-                      color: Colors.white,
+          //           decoration:
+          //               BoxDecoration(
+          //             color: const Color.fromARGB(255, 167, 48, 48),
 
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                        25,
-                      ),
+          //             borderRadius:
+          //                 BorderRadius
+          //                     .circular(
+          //               25,
+          //             ),
 
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black
-                              .withOpacity(
-                            0.15,
-                          ),
+          //             boxShadow: [
+          //               BoxShadow(
+          //                 color: Colors.black
+          //                     .withOpacity(
+          //                   0.15,
+          //                 ),
+          //                 blurRadius: 5,
+          //               ),
+          //             ],
+          //           ),
 
-                          blurRadius: 5,
-                        ),
-                      ],
-                    ),
+          //           child: const Row(
+          //             children: [
 
-                    child: Row(
-                      children: const [
+          //               SizedBox(width: 12),
 
-                        SizedBox(width: 12),
+          //               Icon(
+          //                 Icons.menu,
+          //                 color:
+          //                     Color.fromARGB(137, 131, 29, 29),
+          //               ),
 
-                        Icon(
-                          Icons.menu,
-                          color:
-                              Colors.black54,
-                        ),
+          //               SizedBox(width: 10),
 
-                        SizedBox(width: 10),
+          //               Expanded(
+          //                 child: Text(
+          //                   "Pesquise por um local",
 
-                        Expanded(
-                          child: Text(
-                            "Pesquise por um local",
+          //                   style: TextStyle(
+          //                     color:
+          //                         Colors.grey,
+          //                     fontSize: 14,
+          //                   ),
+          //                 ),
+          //               ),
 
-                            style: TextStyle(
-                              color:
-                                  Colors.grey,
+          //               Icon(
+          //                 Icons.mic,
+          //                 color: Colors.blue,
+          //               ),
 
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
+          //               SizedBox(width: 12),
+          //             ],
+          //           ),
+          //         ),
+          //       ),
 
-                        Icon(
-                          Icons.mic,
-                          color: Colors.blue,
-                        ),
+          //       const SizedBox(width: 10),
 
-                        SizedBox(width: 12),
-                      ],
-                    ),
-                  ),
-                ),
+          //       Container(
+          //         width: 45,
+          //         height: 45,
 
-                const SizedBox(width: 10),
+          //         decoration:
+          //             BoxDecoration(
+          //           color: Colors.white,
+          //           shape:
+          //               BoxShape.circle,
 
-                /// 🔥 PERFIL
-                Container(
-                  width: 45,
-                  height: 45,
+          //           boxShadow: [
+          //             BoxShadow(
+          //               color: Colors.black
+          //                   .withOpacity(
+          //                 0.15,
+          //               ),
+          //               blurRadius: 5,
+          //             ),
+          //           ],
+          //         ),
 
-                  decoration:
-                      BoxDecoration(
-                    color: Colors.white,
+          //         child: const Icon(
+          //           Icons.person,
+          //           color: Colors.blue,
+          //         ),
+          //       ),
+          //     ],
+          //   ),
+          // ),
+        // ),
 
-                    shape:
-                        BoxShape.circle,
-
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black
-                            .withOpacity(
-                          0.15,
-                        ),
-
-                        blurRadius: 5,
-                      ),
-                    ],
-                  ),
-
-                  child: const Icon(
-                    Icons.person,
-                    color: Colors.blue,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-
-        /// 🔥 PIN CENTRAL
-        const Center(
-          child: Icon(
-            Icons.location_pin,
-            color: Colors.red,
-            size: 50,
-          ),
-        ),
-
-        /// 🔥 BOTÃO GPS
         Positioned(
           bottom: 90,
           right: 15,
 
           child: GestureDetector(
             onTap: _focusPara,
+
             child: Container(
               width: 50,
               height: 50,
 
-              decoration: BoxDecoration(
+              decoration:
+                  const BoxDecoration(
                 color: Colors.white,
-
                 shape: BoxShape.circle,
-
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black
-                        .withOpacity(
-                      0.2,
-                    ),
-
-                    blurRadius: 5,
-                  ),
-                ],
               ),
 
               child: const Icon(
                 Icons.my_location,
-                color: Colors.black,
               ),
             ),
-          ),
-        ),
-
-        /// 🔥 BARRA INFERIOR
-        Align(
-          alignment:
-              Alignment.bottomCenter,
-
-          child: Container(
-            height: 60,
-            color: Colors.blue,
           ),
         ),
       ],
     );
   }
 
-  /// 🔹 DRAWER ITEM
+  Marker _buildMarker(
+    LatLng point,
+    IconData icon,
+    Color color,
+    String text,
+  ) {
+
+    return Marker(
+
+      point: point,
+
+      width: 55,
+      height: 55,
+
+      child: Column(
+
+        mainAxisSize: MainAxisSize.min,
+        children: [
+
+          Container(
+
+            padding:
+                const EdgeInsets.all(5),
+
+            decoration:
+                BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 18,
+            ),
+          ),
+
+          const SizedBox(height: 2),
+
+          Text(
+            text,
+
+            style: const TextStyle(
+              fontSize: 7,
+              fontWeight:
+                  FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _drawerItem(
     IconData icon,
     String title,
@@ -644,13 +586,6 @@ class _DashboardViewState
         ),
 
         child: ListTile(
-          shape:
-              RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.circular(
-              16,
-            ),
-          ),
 
           leading: CircleAvatar(
             backgroundColor: color,
@@ -684,21 +619,8 @@ class _DashboardViewState
       ),
     );
   }
-
-  void _comingSoon() {
-
-    Navigator.pop(context);
-
-    ScaffoldMessenger.of(context)
-        .showSnackBar(
-      const SnackBar(
-        content: Text("Em breve 🚀"),
-      ),
-    );
-  }
 }
 
-/// 🔥 CONFIGURAÇÕES
 class ConfiguracaoView
     extends StatelessWidget {
 
@@ -732,7 +654,6 @@ class ConfiguracaoView
 
               Navigator.push(
                 context,
-
                 MaterialPageRoute(
                   builder: (_) =>
                       const PoliticaPrivacidadeView(),
@@ -754,7 +675,6 @@ class ConfiguracaoView
 
               Navigator.push(
                 context,
-
                 MaterialPageRoute(
                   builder: (_) =>
                       const AjudaSuporteView(),
@@ -783,7 +703,6 @@ class ConfiguracaoView
 
               Navigator.push(
                 context,
-
                 MaterialPageRoute(
                   builder: (_) =>
                       const ExcluirView(),
@@ -794,51 +713,5 @@ class ConfiguracaoView
         ],
       ),
     );
-  }
-}
-
-Color _mapPointColor(MapPointCategory category) {
-  switch (category) {
-    case MapPointCategory.hotel:
-      return const Color(0xFFC65AD7);
-    case MapPointCategory.mercado:
-      return const Color(0xFF6A1B9A);
-    case MapPointCategory.posto:
-      return const Color(0xFF4F75D9);
-    case MapPointCategory.oficina:
-      return const Color(0xFFF4B23E);
-    case MapPointCategory.restaurante:
-      return const Color(0xFF46B946);
-    case MapPointCategory.turismo:
-      return const Color(0xFFFF7A1A);
-    case MapPointCategory.hospital:
-      return const Color(0xFFE53935);
-    case MapPointCategory.farmacia:
-      return const Color(0xFF20BBAA);
-    case MapPointCategory.pets:
-      return const Color(0xFF8D5A52);
-  }
-}
-
-IconData _mapPointIcon(MapPointCategory category) {
-  switch (category) {
-    case MapPointCategory.hotel:
-      return Icons.hotel;
-    case MapPointCategory.mercado:
-      return Icons.shopping_cart;
-    case MapPointCategory.posto:
-      return Icons.local_gas_station;
-    case MapPointCategory.oficina:
-      return Icons.directions_car;
-    case MapPointCategory.restaurante:
-      return Icons.restaurant;
-    case MapPointCategory.turismo:
-      return Icons.location_on;
-    case MapPointCategory.hospital:
-      return Icons.local_hospital;
-    case MapPointCategory.farmacia:
-      return Icons.medical_services;
-    case MapPointCategory.pets:
-      return Icons.pets;
   }
 }
