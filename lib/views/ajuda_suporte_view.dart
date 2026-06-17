@@ -1,65 +1,148 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AjudaSuporteView extends StatelessWidget {
   const AjudaSuporteView({super.key});
 
-  // Função para simular o envio do formulário
-  void _simularEnvioEmail(BuildContext context) {
-    // Exibe um círculo de carregamento antes de confirmar
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+  Future<void> _abrirEmail(BuildContext context) async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'eqviagebemoficial@gmail.com',
+      queryParameters: {
+        'subject': 'Suporte ViageBem',
+      },
     );
 
-    // Simula um atraso de rede de 2 segundos
-    Future.delayed(const Duration(seconds: 2), () {
-      Navigator.pop(context); // Fecha o carregamento
-      
-      // Exibe a mensagem de sucesso
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Sua solicitação foi enviada com sucesso!'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 3),
-        ),
+    try {
+      await launchUrl(
+        emailUri,
+        mode: LaunchMode.externalApplication,
       );
-    });
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Não foi possível abrir o aplicativo de e-mail.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
+
       appBar: AppBar(
-        title: const Text('Ajuda e Suporte'),
+        title: const Text(
+          'Ajuda e Suporte',
+        ),
+        centerTitle: true,
       ),
+
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Precisa de auxílio técnico?",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
             const SizedBox(height: 10),
-            const Text("Nossa equipe de suporte está disponível para ajudar."),
-            const SizedBox(height: 20),
-            
-            // Botão de Contato por E-mail
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.email, color: Colors.blue),
-                title: const Text("Enviar chamado por E-mail"),
-                subtitle: const Text("Resposta em até 24 horas"),
-                onTap: () => _simularEnvioEmail(context), // Chama a simulação
+
+            const Text(
+              'Precisa de auxílio técnico?',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            
+
+            const SizedBox(height: 8),
+
+            const Text(
+              'Nossa equipe está disponível para ajudar você com dúvidas, problemas ou sugestões relacionadas ao ViageBem.',
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.black54,
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: ListTile(
+                contentPadding: const EdgeInsets.all(12),
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.blue,
+                  child: Icon(
+                    Icons.email_outlined,
+                    color: Colors.white,
+                  ),
+                ),
+                title: const Text(
+                  'Contatar Suporte',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: const Text(
+                  'eqviagebemoficial@gmail.com',
+                ),
+                trailing: const Icon(
+                  Icons.chevron_right,
+                ),
+                onTap: () => _abrirEmail(context),
+              ),
+            ),
+
             const SizedBox(height: 20),
+
             const Divider(),
-            
-            
+
+            const SizedBox(height: 20),
+
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const ListTile(
+                contentPadding: EdgeInsets.all(12),
+                leading: CircleAvatar(
+                  backgroundColor: Colors.orange,
+                  child: Icon(
+                    Icons.info_outline,
+                    color: Colors.white,
+                  ),
+                ),
+                title: Text(
+                  'Sobre o ViageBem',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                subtitle: Text(
+                  'Versão 1.0.0\nAplicativo de turismo e localização do Pará.',
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            const Center(
+              child: Text(
+                '© ViageBem',
+                style: TextStyle(
+                  color: Colors.grey,
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:flutter_app/views/excluir_view.dart';
 import 'package:flutter_app/views/ajuda_suporte_view.dart';
@@ -14,266 +15,319 @@ import 'package:flutter_app/views/restaurantes_view.dart';
 import 'package:flutter_app/views/hoteis_view.dart';
 import 'package:flutter_app/views/hospitais_view.dart';
 import 'package:flutter_app/views/pets_view.dart';
+import 'package:flutter_app/views/terminais_hidroviarios_view.dart';
+import 'package:flutter_app/views/terminais_rodoviarios_view.dart';
+import 'package:flutter_app/views/configuracao_view.dart';
+
 import '../data/para_locations.dart';
+import '../models/map_location.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
 
   @override
-  State<DashboardView> createState() =>
-      _DashboardViewState();
+  State<DashboardView> createState() => _DashboardViewState();
 }
 
-class _DashboardViewState
-    extends State<DashboardView> {
+class _DashboardViewState extends State<DashboardView> {
+  static const LatLng _paraCenter = LatLng(
+    -3.7000,
+    -52.0000,
+  );
 
-  int _selectedIndex = 0;
+  final int _selectedIndex = 0;
 
-  final MapController _mapController =
-      MapController();
+  final MapController _mapController = MapController();
 
-  void _focusPara() {
+  Position? _currentPosition;
+
+  bool _loadingLocation = false;
+
+  List<MapLocation> get _validLocations {
+    return paraLocations
+        .where((location) => location.hasValidPosition)
+        .toList(growable: false);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _getCurrentLocation();
+  }
+
+  Future<void> _getCurrentLocation() async {
+    setState(() {
+      _loadingLocation = true;
+    });
+
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+
+      setState(() {
+        _loadingLocation = false;
+      });
+
+      return;
+    }
+
+    permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied) {
+        setState(() {
+          _loadingLocation = false;
+        });
+
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      await Geolocator.openAppSettings();
+
+      setState(() {
+        _loadingLocation = false;
+      });
+
+      return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.bestForNavigation,
+      timeLimit: const Duration(
+        seconds: 10,
+      ),
+    );
+
+    setState(() {
+      _currentPosition = position;
+      _loadingLocation = false;
+    });
 
     _mapController.move(
       LatLng(
-        -3.7,
-        -52.0,
+        position.latitude,
+        position.longitude,
       ),
-      5,
+      15,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-
       appBar: AppBar(
         title: const Text("VIAGEBEM"),
       ),
-
       drawer: Drawer(
         child: ListView(
           children: [
-
             const UserAccountsDrawerHeader(
-              accountName:
-                  Text("Patricia"),
-
+              accountName: Text("Patricia"),
               accountEmail: Text(
                 "pattystore43@email.com",
               ),
-
-              currentAccountPicture:
-                  CircleAvatar(
+              currentAccountPicture: CircleAvatar(
                 child: Icon(
                   Icons.person,
                   size: 40,
                 ),
               ),
             ),
+_drawerItem(
+  Icons.settings,
+  "Configurações",
+  Colors.grey,
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const ConfiguracaoView(),
+      ),
+    );
+  },
+),
 
-            _drawerItem(
-              Icons.calendar_today,
-              "Calendário",
-              Colors.blue,
-              () {
+_drawerItem(
+  Icons.calendar_today,
+  "Calendário",
+  Colors.blue,
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CalendarioView(),
+      ),
+    );
+  },
+),
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        const CalendarioView(),
-                  ),
-                );
-              },
-            ),
+const Padding(
+  padding: EdgeInsets.symmetric(
+    horizontal: 20,
+    vertical: 10,
+  ),
+  child: Divider(
+    thickness: 1,
+  ),
+),
 
-            _drawerItem(
-              Icons.local_gas_station,
-              "Postos",
+_drawerItem(
+  Icons.local_gas_station,
+  "Postos",
+  const Color.fromARGB(255, 201, 21, 8),
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => GasStationsScreen(),
+      ),
+    );
+  },
+),
 
-              const Color.fromARGB(
-                255,
-                201,
-                21,
-                8,
-              ),
+_drawerItem(
+  Icons.tour,
+  "Pontos Turísticos",
+  Colors.orange,
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TouristSpotsScreen(),
+      ),
+    );
+  },
+),
 
-              () {
+_drawerItem(
+  Icons.car_repair,
+  "Oficinas",
+  const Color.fromARGB(255, 28, 25, 34),
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OficinasScreen(),
+      ),
+    );
+  },
+),
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        GasStationsScreen(),
-                  ),
-                );
-              },
-            ),
+_drawerItem(
+  Icons.local_grocery_store,
+  "Mercado",
+  const Color.fromARGB(255, 106, 67, 184),
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MarketsScreen(),
+      ),
+    );
+  },
+),
 
-            _drawerItem(
-              Icons.tour,
-              "Pontos Turísticos",
-              Colors.orange,
-              () {
+_drawerItem(
+  Icons.restaurant,
+  "Restaurantes",
+  const Color.fromARGB(255, 67, 184, 77),
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => RestaurantsScreen(),
+      ),
+    );
+  },
+),
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        TouristSpotsScreen(),
-                  ),
-                );
-              },
-            ),
+_drawerItem(
+  Icons.hotel,
+  "Hotéis",
+  Colors.purple,
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HotelsScreen(),
+      ),
+    );
+  },
+),
 
-            _drawerItem(
-              Icons.car_repair,
-              "Oficinas",
+_drawerItem(
+  Icons.local_hospital,
+  "Hospitais",
+  Colors.red,
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => HospitalsScreen(),
+      ),
+    );
+  },
+),
 
-              const Color.fromARGB(
-                255,
-                28,
-                25,
-                34,
-              ),
+_drawerItem(
+  Icons.pets,
+  "Pets",
+  Colors.teal,
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PetsScreen(),
+      ),
+    );
+  },
+),
 
-              () {
+_drawerItem(
+  Icons.directions_boat,
+  "Terminais Hidroviarios",
+  Colors.blue,
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const RiverTerminalsScreen(),
+      ),
+    );
+  },
+),
 
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        OficinasScreen(),
-                  ),
-                );
-              },
-            ),
-
-            _drawerItem(
-              Icons.local_grocery_store,
-              "Mercado",
-
-              const Color.fromARGB(
-                255,
-                106,
-                67,
-                184,
-              ),
-
-              () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        MarketsScreen(),
-                  ),
-                );
-              },
-            ),
-
-            _drawerItem(
-              Icons.restaurant,
-              "Restaurantes",
-
-              const Color.fromARGB(
-                255,
-                67,
-                184,
-                77,
-              ),
-
-              () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        RestaurantsScreen(),
-                  ),
-                );
-              },
-            ),
-
-            _drawerItem(
-              Icons.hotel,
-              "Hotéis",
-              Colors.purple,
-              () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        HotelsScreen(),
-                  ),
-                );
-              },
-            ),
-
-            _drawerItem(
-              Icons.local_hospital,
-              "Hospitais",
-              Colors.red,
-              () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        HospitalsScreen(),
-                  ),
-                );
-              },
-            ),
-
-            _drawerItem(
-              Icons.pets,
-              "Pets",
-              Colors.teal,
-              () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        PetsScreen(),
-                  ),
-                );
-              },
-            ),
-
-            const Divider(),
-
-            _drawerItem(
-              Icons.settings,
-              "Configurações",
-              Colors.grey,
-              () {
-
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        const ConfiguracaoView(),
-                  ),
-                );
-              },
-            ),
+_drawerItem(
+  Icons.directions_bus,
+  "Terminais Rodoviarios",
+  const Color.fromARGB(255, 99, 64, 0),
+  () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const BusTerminalsScreen(),
+      ),
+    );
+  },
+),
           ],
         ),
       ),
-
       body: _buildBody(),
     );
   }
 
   Widget _buildBody() {
-
     switch (_selectedIndex) {
-
       case 0:
         return _buildMapa();
 
@@ -285,220 +339,56 @@ class _DashboardViewState
   }
 
   Widget _buildMapa() {
-
     return Stack(
       children: [
-
         FlutterMap(
-
           mapController: _mapController,
-
           options: MapOptions(
-
-            initialCenter: LatLng(
-              -3.7,
-              -52.0,
-            ),
-
-            initialZoom: 13,
+            initialCenter: _paraCenter,
+            initialZoom: 6,
           ),
-
           children: [
-
             TileLayer(
-
-              urlTemplate:
-                  'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-
-              userAgentPackageName:
-                  'com.example.flutter_app',
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.example.flutter_app',
             ),
-
-MarkerLayer(
-
-  markers:
-      paraLocations.map((location) {
-
-    return Marker(
-
-      point: location.position,
-
-      width: 55,
-      height: 55,
-
-      child: Column(
-
-        mainAxisSize:
-            MainAxisSize.min,
-
-        children: [
-
-          Container(
-
-            padding:
-                const EdgeInsets.all(5),
-
-            decoration:
-                BoxDecoration(
-
-              color: location.color,
-
-              shape: BoxShape.circle,
+            MarkerLayer(
+              markers: [
+                ..._buildLocationMarkers(),
+                if (_currentPosition != null)
+                  Marker(
+                    point: LatLng(
+                      _currentPosition!.latitude,
+                      _currentPosition!.longitude,
+                    ),
+                    width: 80,
+                    height: 80,
+                    child: const Icon(
+                      Icons.my_location,
+                      color: Colors.blue,
+                      size: 35,
+                    ),
+                  ),
+              ],
             ),
-
-            child: Icon(
-              location.icon,
-
-              color: Colors.white,
-              size: 18,
-            ),
-          ),
-
-          const SizedBox(height: 2),
-
-          Text(
-            location.name,
-
-            overflow:
-                TextOverflow.ellipsis,
-
-            style: const TextStyle(
-              fontSize: 6,
-              fontWeight:
-                  FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }).toList(),
-)
           ],
         ),
-
-        /// 🔥 TOPO
-        // SafeArea(
-          // child: Padding(
-          //   padding:
-          //       const EdgeInsets.symmetric(
-          //     horizontal: 10,
-          //     vertical: 8,
-          //   ),
-
-          //   child: Row(
-          //     children: [
-
-          //       Expanded(
-          //         child: Container(
-          //           height: 45,
-
-          //           decoration:
-          //               BoxDecoration(
-          //             color: const Color.fromARGB(255, 167, 48, 48),
-
-          //             borderRadius:
-          //                 BorderRadius
-          //                     .circular(
-          //               25,
-          //             ),
-
-          //             boxShadow: [
-          //               BoxShadow(
-          //                 color: Colors.black
-          //                     .withOpacity(
-          //                   0.15,
-          //                 ),
-          //                 blurRadius: 5,
-          //               ),
-          //             ],
-          //           ),
-
-          //           child: const Row(
-          //             children: [
-
-          //               SizedBox(width: 12),
-
-          //               Icon(
-          //                 Icons.menu,
-          //                 color:
-          //                     Color.fromARGB(137, 131, 29, 29),
-          //               ),
-
-          //               SizedBox(width: 10),
-
-          //               Expanded(
-          //                 child: Text(
-          //                   "Pesquise por um local",
-
-          //                   style: TextStyle(
-          //                     color:
-          //                         Colors.grey,
-          //                     fontSize: 14,
-          //                   ),
-          //                 ),
-          //               ),
-
-          //               Icon(
-          //                 Icons.mic,
-          //                 color: Colors.blue,
-          //               ),
-
-          //               SizedBox(width: 12),
-          //             ],
-          //           ),
-          //         ),
-          //       ),
-
-          //       const SizedBox(width: 10),
-
-          //       Container(
-          //         width: 45,
-          //         height: 45,
-
-          //         decoration:
-          //             BoxDecoration(
-          //           color: Colors.white,
-          //           shape:
-          //               BoxShape.circle,
-
-          //           boxShadow: [
-          //             BoxShadow(
-          //               color: Colors.black
-          //                   .withOpacity(
-          //                 0.15,
-          //               ),
-          //               blurRadius: 5,
-          //             ),
-          //           ],
-          //         ),
-
-          //         child: const Icon(
-          //           Icons.person,
-          //           color: Colors.blue,
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
-        // ),
-
+        if (_loadingLocation)
+          const Center(
+            child: CircularProgressIndicator(),
+          ),
         Positioned(
           bottom: 90,
           right: 15,
-
           child: GestureDetector(
-            onTap: _focusPara,
-
+            onTap: _getCurrentLocation,
             child: Container(
               width: 50,
               height: 50,
-
-              decoration:
-                  const BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
                 shape: BoxShape.circle,
               ),
-
               child: const Icon(
                 Icons.my_location,
               ),
@@ -509,57 +399,31 @@ MarkerLayer(
     );
   }
 
-  Marker _buildMarker(
-    LatLng point,
-    IconData icon,
-    Color color,
-    String text,
-  ) {
+  List<Marker> _buildLocationMarkers() {
+    return _validLocations.map((location) {
+      return Marker(
+        point: location.position,
+        width: 30,
+        height: 34,
+        alignment: Alignment.topCenter,
+        child: _MapLocationMarker(
+          location: location,
+          onTap: () => _showLocationName(location),
+        ),
+      );
+    }).toList(growable: false);
+  }
 
-    return Marker(
-
-      point: point,
-
-      width: 55,
-      height: 55,
-
-      child: Column(
-
-        mainAxisSize: MainAxisSize.min,
-        children: [
-
-          Container(
-
-            padding:
-                const EdgeInsets.all(5),
-
-            decoration:
-                BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
-
-            child: Icon(
-              icon,
-              color: Colors.white,
-              size: 18,
-            ),
-          ),
-
-          const SizedBox(height: 2),
-
-          Text(
-            text,
-
-            style: const TextStyle(
-              fontSize: 7,
-              fontWeight:
-                  FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
+  void _showLocationName(MapLocation location) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+          content: Text('${location.name} - ${location.city}'),
+        ),
+      );
   }
 
   Widget _drawerItem(
@@ -568,49 +432,34 @@ MarkerLayer(
     Color color,
     VoidCallback onTap,
   ) {
-
     return Padding(
-      padding:
-          const EdgeInsets.symmetric(
+      padding: const EdgeInsets.symmetric(
         horizontal: 12,
         vertical: 6,
       ),
-
       child: Material(
-        color:
-            color.withOpacity(0.15),
-
-        borderRadius:
-            BorderRadius.circular(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(
           16,
         ),
-
         child: ListTile(
-
           leading: CircleAvatar(
             backgroundColor: color,
-
             child: Icon(
               icon,
               color: Colors.white,
             ),
           ),
-
           title: Text(
             title,
-
             style: const TextStyle(
-              fontWeight:
-                  FontWeight.w600,
+              fontWeight: FontWeight.w600,
             ),
           ),
-
           trailing: const Icon(
             Icons.chevron_right,
           ),
-
           onTap: () {
-
             Navigator.pop(context);
 
             onTap();
@@ -621,97 +470,229 @@ MarkerLayer(
   }
 }
 
-class ConfiguracaoView
-    extends StatelessWidget {
+class _MapLocationMarker extends StatelessWidget {
+  const _MapLocationMarker({
+    required this.location,
+    required this.onTap,
+  });
 
+  final MapLocation location;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: '${location.name} - ${location.city}',
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        child: SizedBox(
+          width: 30,
+          height: 34,
+          child: Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              Icon(
+                Icons.location_on,
+                color: location.color,
+                size: 32,
+                shadows: [
+                  Shadow(
+                    color: Colors.black.withValues(alpha: 0.24),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              Positioned(
+                top: 5,
+                child: Container(
+                  width: 15,
+                  height: 15,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    location.icon,
+                    color: location.color,
+                    size: 10,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ConfiguracaoView extends StatelessWidget {
   const ConfiguracaoView({
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
+appBar: AppBar(
+  elevation: 0,
+  backgroundColor: Colors.white,
+  foregroundColor: Colors.black,
+  title: const Text(
+    'Configurações',
+    style: TextStyle(
+      fontWeight: FontWeight.bold,
+    ),
+  ),
+),
+body: Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+  child: Column(
+    children: [
+      Expanded(
+        child: ListView(
+          children: [
 
-      appBar: AppBar(
-        title:
-            const Text('Configurações'),
-      ),
+            const SizedBox(height: 10),
 
-      body: ListView(
-        children: [
-
-          ListTile(
-            leading: const Icon(
-              Icons.privacy_tip,
-            ),
-
-            title: const Text(
-              'Política de Privacidade',
-            ),
-
-            onTap: () {
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const PoliticaPrivacidadeView(),
-                ),
-              );
-            },
-          ),
-
-          ListTile(
-            leading: const Icon(
-              Icons.help_outline,
-            ),
-
-            title: const Text(
-              'Ajuda e Suporte',
-            ),
-
-            onTap: () {
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const AjudaSuporteView(),
-                ),
-              );
-            },
-          ),
-
-          const Divider(),
-
-          ListTile(
-            leading: const Icon(
-              Icons.delete,
-              color: Colors.red,
-            ),
-
-            title: const Text(
-              "Excluir Conta",
-
+            const Text(
+              'Preferências do Sistema',
               style: TextStyle(
-                color: Colors.red,
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
               ),
             ),
 
-            onTap: () {
+            const SizedBox(height: 10),
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) =>
-                      const ExcluirView(),
+            ListTile(
+              leading: const Icon(Icons.notifications_none),
+              title: const Text('Notificações'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {},
+            ),
+
+
+            ListTile(
+              leading: const Icon(Icons.help_outline),
+              title: const Text('Ajuda e Suporte'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const AjudaSuporteView(),
+                  ),
+                );
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.privacy_tip_outlined),
+              title: const Text('Termos de Privacidade'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const PoliticaPrivacidadeView(),
+                  ),
+                );
+              },
+            ),
+
+            const Divider(height: 40),
+
+            const Text(
+              'Conta',
+              style: TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            ListTile(
+              leading: const Icon(Icons.person_outline),
+              title: const Text('Editar Perfil'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                // Tela futura
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(
+                Icons.delete_outline,
+                color: Colors.red,
+              ),
+              title: const Text(
+                'Excluir Conta',
+                style: TextStyle(
+                  color: Colors.red,
                 ),
-              );
-            },
-          ),
-        ],
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ExcluirView(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
+
+      Padding(
+        padding: const EdgeInsets.only(
+          bottom: 25,
+          top: 10,
+        ),
+        child: SizedBox(
+          width: double.infinity,
+          height: 55,
+          child: ElevatedButton(
+            onPressed: () {
+              // logout
+            },
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.zero,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+            child: Ink(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(30),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color(0xFFFFA726),
+                    Color(0xFF1E88E5),
+                  ],
+                ),
+              ),
+              child: const Center(
+                child: Text(
+                  'SAIR DA CONTA',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ],
+  ),
+),
     );
   }
 }

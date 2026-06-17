@@ -329,85 +329,36 @@ class _LoginViewState extends State<LoginView> {
           const SizedBox(height: 10),
 
           /// 🔥 CHECKBOX + ESQUECI
-          Row(
-            mainAxisAlignment:
-                MainAxisAlignment
-                    .spaceBetween,
-
-            children: [
-
-              Row(
-                children: [
-
-                  Checkbox(
-                    value:
-                        _manterConectado,
-
-                    onChanged: (value) {
-                      setState(() {
-                        _manterConectado =
-                            value!;
-                      });
-                    },
-
-                    side:
-                        const BorderSide(
-                      color: Colors.white,
-                      width: 2,
-                    ),
-
-                    shape:
-                        RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(
-                        4,
-                      ),
-                    ),
-
-                    activeColor:
-                        Colors.white,
-
-                    checkColor:
-                        Colors.black,
-                  ),
-
-                  const Text(
-                    'Manter conectado',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight:
-                          FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
-
-              TextButton(
-onPressed: () {
-
-  Navigator.push(
-    context,
-
-    MaterialPageRoute(
-      builder: (_) =>
-          const RecuperarSenhaView(),
-    ),
-  );
-},
-
-                child: const Text(
-                  'Esqueceu a senha?',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight:
-                        FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-              ),
-            ],
+/// 🔥 ESQUECI A SENHA
+Row(
+  mainAxisAlignment: MainAxisAlignment.end,
+  children: [
+    Padding(
+      padding: const EdgeInsets.only(
+        right: 6,
+      ),
+      child: TextButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) =>
+                  const RecuperarSenhaView(),
+            ),
+          );
+        },
+        child: const Text(
+          'Esqueceu a senha?',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
           ),
+        ),
+      ),
+    ),
+  ],
+),
 
           const SizedBox(height: 20),
 

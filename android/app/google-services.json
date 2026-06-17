@@ -22,7 +22,15 @@
           }
         },
         {
-          "client_id": "287737363518-7rjh4cp98flidbemv9m6np2mfv1ampn6.apps.googleusercontent.com",
+          "client_id": "287737363518-jpq3ttl71odqf86h8qh9ftgda4lhg6m8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.flutter_app",
+            "certificate_hash": "5d098c4df10bd1a23fce672f98216700428741ab"
+          }
+        },
+        {
+          "client_id": "287737363518-lmob9gdr3popi9f0noubtga1pc4km0o9.apps.googleusercontent.com",
           "client_type": 3
         }
       ],

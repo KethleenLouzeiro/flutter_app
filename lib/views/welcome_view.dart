@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'cadastro_view.dart';
 import 'dashboard_view.dart';
-import 'Postos_view.dart';
+import 'postos_view.dart';
 import 'pontosturisticos_view.dart';
 // import 'oficinas_carros_view.dart';
 import 'package:flutter/material.dart';
