@@ -1,24 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class EditarPerfilView extends StatefulWidget {
   const EditarPerfilView({super.key});
 
   @override
-  State<EditarPerfilView> createState() =>
-      _EditarPerfilViewState();
+  State<EditarPerfilView> createState() => _EditarPerfilViewState();
 }
 
-class _EditarPerfilViewState
-    extends State<EditarPerfilView> {
+class _EditarPerfilViewState extends State<EditarPerfilView> {
+  final TextEditingController _nomeController = TextEditingController();
 
-  final TextEditingController _nomeController =
-      TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
 
-  final TextEditingController _emailController =
-      TextEditingController();
-
-  final TextEditingController _telefoneController =
-      TextEditingController();
+  final TextEditingController _telefoneController = TextEditingController();
 
   @override
   void initState() {
@@ -26,8 +21,7 @@ class _EditarPerfilViewState
 
     // Dados iniciais
     _nomeController.text = 'Patricia';
-    _emailController.text =
-        'pattystore43@email.com';
+    _emailController.text = 'pattystore43@email.com';
   }
 
   @override
@@ -42,11 +36,9 @@ class _EditarPerfilViewState
     return InputDecoration(
       labelText: label,
       border: OutlineInputBorder(
-        borderRadius:
-            BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(15),
       ),
-      contentPadding:
-          const EdgeInsets.symmetric(
+      contentPadding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 16,
       ),
@@ -57,7 +49,6 @@ class _EditarPerfilViewState
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -72,40 +63,30 @@ class _EditarPerfilViewState
           ),
         ),
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
-
         child: Column(
           children: [
-
             const SizedBox(height: 10),
-
             Stack(
               children: [
-
                 const CircleAvatar(
                   radius: 55,
-                  backgroundColor:
-                      Color(0xFFE8EAF6),
-
+                  backgroundColor: Color(0xFFE8EAF6),
                   child: Icon(
                     Icons.person,
                     size: 60,
                     color: Colors.deepPurple,
                   ),
                 ),
-
                 Positioned(
                   bottom: 0,
                   right: 0,
-
                   child: Container(
                     decoration: const BoxDecoration(
                       shape: BoxShape.circle,
                       color: Colors.blue,
                     ),
-
                     child: IconButton(
                       onPressed: () {
                         // Futuro:
@@ -120,48 +101,31 @@ class _EditarPerfilViewState
                 ),
               ],
             ),
-
             const SizedBox(height: 30),
-
             TextField(
               controller: _nomeController,
               decoration: campo(
                 'Nome Completo',
               ),
             ),
-
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: _emailController,
-              decoration: campo(
-                'E-mail',
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            TextField(
-              controller: _telefoneController,
-              keyboardType:
-                  TextInputType.phone,
-              decoration: campo(
-                'Telefone (Opcional)',
-              ),
-            ),
-
             const SizedBox(height: 35),
-
             SizedBox(
               width: double.infinity,
               height: 55,
-
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
 
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(
+                  await prefs.setString(
+                    'nome_usuario',
+                    _nomeController.text,
+                  );
+
+                  print('SALVOU: ${_nomeController.text}');
+
+                  if (!mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
                         'Perfil atualizado com sucesso!',
@@ -169,31 +133,23 @@ class _EditarPerfilViewState
                     ),
                   );
 
-                  Navigator.pop(context);
+                  Navigator.pop(context, true);
                 },
-
-                style:
-                    ElevatedButton.styleFrom(
-                  shape:
-                      RoundedRectangleBorder(
-                    borderRadius:
-                        BorderRadius.circular(
+                style: ElevatedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(
                       30,
                     ),
                   ),
-
-                  backgroundColor:
-                      const Color(
+                  backgroundColor: const Color(
                     0xFF1E88E5,
                   ),
                 ),
-
                 child: const Text(
                   'SALVAR ALTERAÇÕES',
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight:
-                        FontWeight.bold,
+                    fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
                 ),

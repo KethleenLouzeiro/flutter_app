@@ -11,7 +11,6 @@ class ConfiguracaoView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -33,7 +32,6 @@ class ConfiguracaoView extends StatelessWidget {
           ),
         ),
       ),
-
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
@@ -42,7 +40,6 @@ class ConfiguracaoView extends StatelessWidget {
               child: ListView(
                 children: [
                   const SizedBox(height: 10),
-
                   const Text(
                     'Preferências do Sistema',
                     style: TextStyle(
@@ -51,9 +48,7 @@ class ConfiguracaoView extends StatelessWidget {
                       fontSize: 14,
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
                   _buildItem(
                     icon: Icons.notifications_none,
                     title: 'Notificações',
@@ -66,7 +61,6 @@ class ConfiguracaoView extends StatelessWidget {
                       );
                     },
                   ),
-
                   _buildItem(
                     icon: Icons.dark_mode_outlined,
                     title: 'Modo Escuro',
@@ -80,7 +74,6 @@ class ConfiguracaoView extends StatelessWidget {
                       );
                     },
                   ),
-
                   _buildItem(
                     icon: Icons.help_outline,
                     title: 'Ajuda e Suporte',
@@ -93,7 +86,6 @@ class ConfiguracaoView extends StatelessWidget {
                       );
                     },
                   ),
-
                   _buildItem(
                     icon: Icons.privacy_tip_outlined,
                     title: 'Política de Privacidade',
@@ -101,18 +93,15 @@ class ConfiguracaoView extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              const PoliticaPrivacidadeView(),
+                          builder: (_) => const PoliticaPrivacidadeView(),
                         ),
                       );
                     },
                   ),
-
                   const Divider(
                     height: 40,
                     thickness: 1,
                   ),
-
                   const Text(
                     'Conta',
                     style: TextStyle(
@@ -121,22 +110,19 @@ class ConfiguracaoView extends StatelessWidget {
                       fontSize: 14,
                     ),
                   ),
-
                   const SizedBox(height: 12),
-
-                _buildItem(
-  icon: Icons.person_outline,
-  title: 'Editar Perfil',
-  onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const EditarPerfilView(),
-      ),
-    );
-  },
-),
-
+                  _buildItem(
+                    icon: Icons.person_outline,
+                    title: 'Editar Perfil',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const EditarPerfilView(),
+                        ),
+                      );
+                    },
+                  ),
                   _buildItem(
                     icon: Icons.delete_outline,
                     title: 'Excluir Conta',
@@ -153,7 +139,6 @@ class ConfiguracaoView extends StatelessWidget {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.only(
                 bottom: 25,

@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:flutter_app/views/excluir_view.dart';
-import 'package:flutter_app/views/ajuda_suporte_view.dart';
-import 'package:flutter_app/views/politica_privacidade_view.dart';
 import 'package:flutter_app/views/calendario_view.dart';
 import 'package:flutter_app/views/pontosturisticos_view.dart';
 import 'package:flutter_app/views/postos_view.dart';
@@ -34,6 +32,8 @@ class _DashboardViewState extends State<DashboardView> {
     -3.7000,
     -52.0000,
   );
+  
+  String nomeUsuario = 'Patricia';
 
   final int _selectedIndex = 0;
 
@@ -52,9 +52,24 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   void initState() {
     super.initState();
-
+    
+    _carregarNome();
     _getCurrentLocation();
   }
+  
+  Future<void> _carregarNome() async {
+  final prefs = await SharedPreferences.getInstance();
+
+  final nome = prefs.getString('nome_usuario');
+
+  print('CARREGOU: $nome');
+
+  setState(() {
+    nomeUsuario = nome ?? 'Patricia';
+  });
+}
+
+
 
   Future<void> _getCurrentLocation() async {
     setState(() {
@@ -130,9 +145,9 @@ class _DashboardViewState extends State<DashboardView> {
       drawer: Drawer(
         child: ListView(
           children: [
-            const UserAccountsDrawerHeader(
-              accountName: Text("Patricia"),
-              accountEmail: Text(
+             UserAccountsDrawerHeader(
+              accountName: Text(nomeUsuario),
+              accountEmail: const Text(
                 "pattystore43@email.com",
               ),
               currentAccountPicture: CircleAvatar(
@@ -142,183 +157,171 @@ class _DashboardViewState extends State<DashboardView> {
                 ),
               ),
             ),
-_drawerItem(
-  Icons.settings,
-  "Configurações",
-  Colors.grey,
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const ConfiguracaoView(),
-      ),
-    );
-  },
-),
-
-_drawerItem(
-  Icons.calendar_today,
-  "Calendário",
-  Colors.blue,
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const CalendarioView(),
-      ),
-    );
-  },
-),
-
-const Padding(
-  padding: EdgeInsets.symmetric(
-    horizontal: 20,
-    vertical: 10,
-  ),
-  child: Divider(
-    thickness: 1,
-  ),
-),
-
-_drawerItem(
-  Icons.local_gas_station,
-  "Postos",
-  const Color.fromARGB(255, 201, 21, 8),
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => GasStationsScreen(),
-      ),
-    );
-  },
-),
-
-_drawerItem(
-  Icons.tour,
-  "Pontos Turísticos",
-  Colors.orange,
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => TouristSpotsScreen(),
-      ),
-    );
-  },
-),
-
-_drawerItem(
-  Icons.car_repair,
-  "Oficinas",
-  const Color.fromARGB(255, 28, 25, 34),
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OficinasScreen(),
-      ),
-    );
-  },
-),
-
-_drawerItem(
-  Icons.local_grocery_store,
-  "Mercado",
-  const Color.fromARGB(255, 106, 67, 184),
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => MarketsScreen(),
-      ),
-    );
-  },
-),
-
-_drawerItem(
-  Icons.restaurant,
-  "Restaurantes",
-  const Color.fromARGB(255, 67, 184, 77),
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => RestaurantsScreen(),
-      ),
-    );
-  },
-),
-
-_drawerItem(
-  Icons.hotel,
-  "Hotéis",
-  Colors.purple,
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => HotelsScreen(),
-      ),
-    );
-  },
-),
-
-_drawerItem(
-  Icons.local_hospital,
-  "Hospitais",
-  Colors.red,
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => HospitalsScreen(),
-      ),
-    );
-  },
-),
-
-_drawerItem(
-  Icons.pets,
-  "Pets",
-  Colors.teal,
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PetsScreen(),
-      ),
-    );
-  },
-),
-
-_drawerItem(
-  Icons.directions_boat,
-  "Terminais Hidroviarios",
-  Colors.blue,
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const RiverTerminalsScreen(),
-      ),
-    );
-  },
-),
-
-_drawerItem(
-  Icons.directions_bus,
-  "Terminais Rodoviarios",
-  const Color.fromARGB(255, 99, 64, 0),
-  () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const BusTerminalsScreen(),
-      ),
-    );
-  },
-),
+            _drawerItem(
+              Icons.settings,
+              "Configurações",
+              Colors.grey,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const ConfiguracaoView(),
+                  ),
+                );
+              },
+            ),
+            _drawerItem(
+              Icons.calendar_today,
+              "Calendário",
+              Colors.blue,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CalendarioView(),
+                  ),
+                );
+              },
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 20,
+                vertical: 10,
+              ),
+              child: Divider(
+                thickness: 1,
+              ),
+            ),
+            _drawerItem(
+              Icons.local_gas_station,
+              "Postos",
+              const Color.fromARGB(255, 201, 21, 8),
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => GasStationsScreen(),
+                  ),
+                );
+              },
+            ),
+            _drawerItem(
+              Icons.tour,
+              "Pontos Turísticos",
+              Colors.orange,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TouristSpotsScreen(),
+                  ),
+                );
+              },
+            ),
+            _drawerItem(
+              Icons.car_repair,
+              "Oficinas",
+              const Color.fromARGB(255, 28, 25, 34),
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => OficinasScreen(),
+                  ),
+                );
+              },
+            ),
+            _drawerItem(
+              Icons.local_grocery_store,
+              "Mercado",
+              const Color.fromARGB(255, 106, 67, 184),
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => MarketsScreen(),
+                  ),
+                );
+              },
+            ),
+            _drawerItem(
+              Icons.restaurant,
+              "Restaurantes",
+              const Color.fromARGB(255, 67, 184, 77),
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RestaurantsScreen(),
+                  ),
+                );
+              },
+            ),
+            _drawerItem(
+              Icons.hotel,
+              "Hotéis",
+              Colors.purple,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HotelsScreen(),
+                  ),
+                );
+              },
+            ),
+            _drawerItem(
+              Icons.local_hospital,
+              "Hospitais",
+              Colors.red,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => HospitalsScreen(),
+                  ),
+                );
+              },
+            ),
+            _drawerItem(
+              Icons.pets,
+              "Pets",
+              Colors.teal,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PetsScreen(),
+                  ),
+                );
+              },
+            ),
+            _drawerItem(
+              Icons.directions_boat,
+              "Terminais Hidroviarios",
+              Colors.blue,
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const RiverTerminalsScreen(),
+                  ),
+                );
+              },
+            ),
+            _drawerItem(
+              Icons.directions_bus,
+              "Terminais Rodoviarios",
+              const Color.fromARGB(255, 99, 64, 0),
+              () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const BusTerminalsScreen(),
+                  ),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -524,175 +527,6 @@ class _MapLocationMarker extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class ConfiguracaoView extends StatelessWidget {
-  const ConfiguracaoView({
-    super.key,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-appBar: AppBar(
-  elevation: 0,
-  backgroundColor: Colors.white,
-  foregroundColor: Colors.black,
-  title: const Text(
-    'Configurações',
-    style: TextStyle(
-      fontWeight: FontWeight.bold,
-    ),
-  ),
-),
-body: Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 16),
-  child: Column(
-    children: [
-      Expanded(
-        child: ListView(
-          children: [
-
-            const SizedBox(height: 10),
-
-            const Text(
-              'Preferências do Sistema',
-              style: TextStyle(
-                color: Colors.blue,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            ListTile(
-              leading: const Icon(Icons.notifications_none),
-              title: const Text('Notificações'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
-            ),
-
-
-            ListTile(
-              leading: const Icon(Icons.help_outline),
-              title: const Text('Ajuda e Suporte'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const AjudaSuporteView(),
-                  ),
-                );
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.privacy_tip_outlined),
-              title: const Text('Termos de Privacidade'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const PoliticaPrivacidadeView(),
-                  ),
-                );
-              },
-            ),
-
-            const Divider(height: 40),
-
-            const Text(
-              'Conta',
-              style: TextStyle(
-                color: Colors.blue,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            ListTile(
-              leading: const Icon(Icons.person_outline),
-              title: const Text('Editar Perfil'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                // Tela futura
-              },
-            ),
-
-            ListTile(
-              leading: const Icon(
-                Icons.delete_outline,
-                color: Colors.red,
-              ),
-              title: const Text(
-                'Excluir Conta',
-                style: TextStyle(
-                  color: Colors.red,
-                ),
-              ),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const ExcluirView(),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-
-      Padding(
-        padding: const EdgeInsets.only(
-          bottom: 25,
-          top: 10,
-        ),
-        child: SizedBox(
-          width: double.infinity,
-          height: 55,
-          child: ElevatedButton(
-            onPressed: () {
-              // logout
-            },
-            style: ElevatedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-            ),
-            child: Ink(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                gradient: const LinearGradient(
-                  colors: [
-                    Color(0xFFFFA726),
-                    Color(0xFF1E88E5),
-                  ],
-                ),
-              ),
-              child: const Center(
-                child: Text(
-                  'SAIR DA CONTA',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    ],
-  ),
-),
     );
   }
 }
