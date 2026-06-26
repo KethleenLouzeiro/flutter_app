@@ -114,13 +114,17 @@ class ConfiguracaoView extends StatelessWidget {
                   _buildItem(
                     icon: Icons.person_outline,
                     title: 'Editar Perfil',
-                    onTap: () {
-                      Navigator.push(
+                    onTap: () async {
+                      final resultado = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (_) => const EditarPerfilView(),
                         ),
                       );
+
+                      if (resultado == true) {
+                        Navigator.pop(context, true);
+                      }
                     },
                   ),
                   _buildItem(

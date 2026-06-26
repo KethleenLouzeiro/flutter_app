@@ -1,3 +1,7 @@
+import 'dart:io';
+
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -32,8 +36,14 @@ class _DashboardViewState extends State<DashboardView> {
     -3.7000,
     -52.0000,
   );
-  
-  String nomeUsuario = 'Patricia';
+
+  String nomeUsuario = '';
+
+  String emailUsuario = '';
+
+  String? caminhoFoto;
+
+  Color corPerfil = Colors.deepPurple;
 
   final int _selectedIndex = 0;
 
@@ -52,24 +62,34 @@ class _DashboardViewState extends State<DashboardView> {
   @override
   void initState() {
     super.initState();
-    
+
     _carregarNome();
     _getCurrentLocation();
   }
-  
+
   Future<void> _carregarNome() async {
-  final prefs = await SharedPreferences.getInstance();
+    final prefs = await SharedPreferences.getInstance();
 
-  final nome = prefs.getString('nome_usuario');
+    final user = FirebaseAuth.instance.currentUser;
 
-  print('CARREGOU: $nome');
+    setState(() {
+      emailUsuario = user?.email ?? '';
 
-  setState(() {
-    nomeUsuario = nome ?? 'Patricia';
-  });
-}
+      nomeUsuario = prefs.getString('nome_usuario') ?? '';
 
+      if (nomeUsuario.isEmpty) {
+        nomeUsuario = emailUsuario;
+      }
 
+      caminhoFoto = prefs.getString('foto_usuario');
+
+      final corSalva = prefs.getInt('cor_perfil');
+
+      if (corSalva != null) {
+        corPerfil = Color(corSalva);
+      }
+    });
+  }
 
   Future<void> _getCurrentLocation() async {
     setState(() {
@@ -145,29 +165,38 @@ class _DashboardViewState extends State<DashboardView> {
       drawer: Drawer(
         child: ListView(
           children: [
-             UserAccountsDrawerHeader(
-              accountName: Text(nomeUsuario),
-              accountEmail: const Text(
-                "pattystore43@email.com",
+            UserAccountsDrawerHeader(
+              decoration: BoxDecoration(
+                color: corPerfil,
               ),
+              accountName: Text(nomeUsuario),
+              accountEmail: Text(emailUsuario),
               currentAccountPicture: CircleAvatar(
-                child: Icon(
-                  Icons.person,
-                  size: 40,
-                ),
+                backgroundImage:
+                    caminhoFoto != null ? FileImage(File(caminhoFoto!)) : null,
+                child: caminhoFoto == null
+                    ? const Icon(
+                        Icons.person,
+                        size: 40,
+                      )
+                    : null,
               ),
             ),
             _drawerItem(
               Icons.settings,
               "Configurações",
               Colors.grey,
-              () {
-                Navigator.push(
+              () async {
+                final resultado = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => const ConfiguracaoView(),
                   ),
                 );
+
+                if (resultado == true) {
+                  _carregarNome();
+                }
               },
             ),
             _drawerItem(

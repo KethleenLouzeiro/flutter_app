@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:image_picker/image_picker.dart';
 
 class EditarPerfilView extends StatefulWidget {
   const EditarPerfilView({super.key});
@@ -15,13 +18,35 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
 
   final TextEditingController _telefoneController = TextEditingController();
 
+  File? _imagemPerfil;
+
+  String? _caminhoImagem;
+
+  Color corSelecionada = Colors.deepPurple;
+
+  Future<void> _selecionarFoto() async {
+    final ImagePicker picker = ImagePicker();
+
+    final XFile? imagem = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (imagem == null) return;
+
+    setState(() {
+      _imagemPerfil = File(imagem.path);
+      _caminhoImagem = imagem.path;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
 
     // Dados iniciais
-    _nomeController.text = 'Patricia';
-    _emailController.text = 'pattystore43@email.com';
+    _nomeController.text = ' ';
+    _emailController.text = ' ';
   }
 
   @override
@@ -70,14 +95,18 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
             const SizedBox(height: 10),
             Stack(
               children: [
-                const CircleAvatar(
+                CircleAvatar(
                   radius: 55,
-                  backgroundColor: Color(0xFFE8EAF6),
-                  child: Icon(
-                    Icons.person,
-                    size: 60,
-                    color: Colors.deepPurple,
-                  ),
+                  backgroundColor: const Color(0xFFE8EAF6),
+                  backgroundImage:
+                      _imagemPerfil != null ? FileImage(_imagemPerfil!) : null,
+                  child: _imagemPerfil == null
+                      ? const Icon(
+                          Icons.person,
+                          size: 60,
+                          color: Colors.deepPurple,
+                        )
+                      : null,
                 ),
                 Positioned(
                   bottom: 0,
@@ -88,10 +117,7 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
                       color: Colors.blue,
                     ),
                     child: IconButton(
-                      onPressed: () {
-                        // Futuro:
-                        // trocar foto
-                      },
+                      onPressed: _selecionarFoto,
                       icon: const Icon(
                         Icons.camera_alt,
                         color: Colors.white,
@@ -108,6 +134,29 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
                 'Nome Completo',
               ),
             ),
+            const SizedBox(height: 25),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Cor do Perfil',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 15),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildColorOption(Colors.deepPurple),
+                _buildColorOption(Colors.blue),
+                _buildColorOption(Colors.green),
+                _buildColorOption(Colors.orange),
+                _buildColorOption(Colors.black),
+              ],
+            ),
+            const SizedBox(height: 25),
             const SizedBox(height: 35),
             SizedBox(
               width: double.infinity,
@@ -119,6 +168,16 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
                   await prefs.setString(
                     'nome_usuario',
                     _nomeController.text,
+                  );
+                  if (_caminhoImagem != null) {
+                    await prefs.setString(
+                      'foto_usuario',
+                      _caminhoImagem!,
+                    );
+                  }
+                  await prefs.setInt(
+                    'cor_perfil',
+                    corSelecionada.toARGB32(),
                   );
 
                   print('SALVOU: ${_nomeController.text}');
@@ -157,6 +216,27 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildColorOption(Color cor) {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          corSelecionada = cor;
+        });
+      },
+      child: CircleAvatar(
+        radius: 18,
+        backgroundColor: cor,
+        child: corSelecionada == cor
+            ? const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 18,
+              )
+            : null,
       ),
     );
   }
