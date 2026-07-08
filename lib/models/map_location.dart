@@ -33,6 +33,12 @@ class MapLocation {
 
   final String? description;
 
+  final String? address;
+
+  final String? phone;
+
+  final String? openingHours;
+
   const MapLocation({
     required this.name,
     required this.position,
@@ -41,6 +47,9 @@ class MapLocation {
     required this.category,
     required this.city,
     this.description,
+    this.address,
+    this.phone,
+    this.openingHours,
   });
 
   bool get hasValidPosition {

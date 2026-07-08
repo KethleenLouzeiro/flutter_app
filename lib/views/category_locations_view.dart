@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../data/para_locations.dart';
 import '../models/map_location.dart';
+import '../services/route_service.dart';
 
 class CategoryLocationsView extends StatefulWidget {
   const CategoryLocationsView({
@@ -35,9 +36,14 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
 
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
+  final RouteService _routeService = RouteService();
 
   String _query = '';
   MapLocation? _selectedLocation;
+  Position? _currentPosition;
+  bool _loadingRoute = false;
+  RouteResult? _activeRoute;
+  MapLocation? _routeDestination;
 
   List<MapLocation> get _categoryLocations {
     return paraLocations
@@ -76,6 +82,7 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
 
   @override
   void dispose() {
+    _routeService.close();
     _searchController.dispose();
     super.dispose();
   }
@@ -101,22 +108,156 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
           categoryTitle: widget.title,
           color: widget.color,
           icon: widget.icon,
-          onRoute: () => _openRoute(location),
+          onRoute: () {
+            Navigator.pop(context);
+            _traceRoute(location);
+          },
           onFavorite: () => _favorite(location),
         );
       },
     );
   }
 
-  Future<void> _openRoute(MapLocation location) async {
-    final uri = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1&destination='
-      '${location.position.latitude},${location.position.longitude}',
-    );
+  Future<void> _traceRoute(MapLocation location) async {
+    if (_loadingRoute) return;
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    setState(() {
+      _loadingRoute = true;
+      _selectedLocation = location;
+    });
+
+    try {
+      final canUseLocation = await _ensureLocationPermission();
+
+      if (!canUseLocation) {
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      if (!position.latitude.isFinite || !position.longitude.isFinite) {
+        _showMessage('Localizacao atual invalida para tracar rota.');
+        return;
+      }
+
+      final route = await _routeService.fetchRoute(
+        origin: LatLng(position.latitude, position.longitude),
+        destination: location.position,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _currentPosition = position;
+        _activeRoute = route;
+        _routeDestination = location;
+      });
+
+      _fitRoute(route.points);
+      _showMessage('Rota para ${location.name} tracada no mapa.');
+    } on RouteServiceException catch (error) {
+      _showMessage(error.message);
+    } catch (_) {
+      _showMessage('Nao foi possivel calcular a rota agora.');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loadingRoute = false;
+        });
+      }
     }
+  }
+
+  Future<bool> _ensureLocationPermission() async {
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      await Geolocator.openLocationSettings();
+      return false;
+    }
+
+    var permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.denied) {
+      _showMessage('Permissao de localizacao negada.');
+      return false;
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      await Geolocator.openAppSettings();
+      return false;
+    }
+
+    return true;
+  }
+
+  void _fitRoute(List<LatLng> points) {
+    if (points.length < 2) return;
+
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: LatLngBounds.fromPoints(points),
+        padding: const EdgeInsets.fromLTRB(28, 36, 28, 92),
+        maxZoom: 16,
+      ),
+    );
+  }
+
+  void _clearRoute() {
+    setState(() {
+      _activeRoute = null;
+      _routeDestination = null;
+    });
+  }
+
+  Color _routeColorFor(MapLocation location) {
+    switch (location.category) {
+      case MapLocationCategory.gasStation:
+        return const Color(0xFFC91508);
+      case MapLocationCategory.restaurant:
+        return const Color.fromARGB(255, 67, 184, 77);
+      case MapLocationCategory.hotel:
+        return Colors.purple;
+      case MapLocationCategory.hospital:
+        return Colors.redAccent;
+      case MapLocationCategory.market:
+        return const Color.fromARGB(255, 106, 67, 184);
+      case MapLocationCategory.petShop:
+        return Colors.teal;
+      case MapLocationCategory.repairShop:
+        return const Color.fromARGB(255, 28, 25, 34);
+      case MapLocationCategory.touristSpot:
+      case MapLocationCategory.beach:
+      case MapLocationCategory.naturalAttraction:
+      case MapLocationCategory.historicSite:
+        return Colors.orange;
+      case MapLocationCategory.pharmacy:
+        return Colors.green;
+      case MapLocationCategory.riverPort:
+        return Colors.blue;
+      case MapLocationCategory.busTerminal:
+        return const Color.fromARGB(255, 99, 64, 0);
+    }
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text(message),
+        ),
+      );
   }
 
   void _favorite(MapLocation location) {
@@ -176,6 +317,14 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
               onFocusTap: () {
                 _mapController.move(_initialCenter, 13);
               },
+              activeRoute: _activeRoute,
+              currentPosition: _currentPosition,
+              routeDestination: _routeDestination,
+              routeColor: _routeDestination == null
+                  ? widget.color
+                  : _routeColorFor(_routeDestination!),
+              loadingRoute: _loadingRoute,
+              onClearRoute: _clearRoute,
             ),
             _ResultSummary(
               count: _filteredLocations.length,
@@ -397,6 +546,12 @@ class _CategoryMap extends StatelessWidget {
     required this.title,
     required this.onMarkerTap,
     required this.onFocusTap,
+    required this.activeRoute,
+    required this.currentPosition,
+    required this.routeDestination,
+    required this.routeColor,
+    required this.loadingRoute,
+    required this.onClearRoute,
   });
 
   final List<MapLocation> locations;
@@ -408,6 +563,12 @@ class _CategoryMap extends StatelessWidget {
   final String title;
   final ValueChanged<MapLocation> onMarkerTap;
   final VoidCallback onFocusTap;
+  final RouteResult? activeRoute;
+  final Position? currentPosition;
+  final MapLocation? routeDestination;
+  final Color routeColor;
+  final bool loadingRoute;
+  final VoidCallback onClearRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -444,25 +605,54 @@ class _CategoryMap extends StatelessWidget {
                   urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.example.flutter_app',
                 ),
-                MarkerLayer(
-                  markers: locations.map((location) {
-                    final isSelected = location == selectedLocation;
-                    return Marker(
-                      point: location.position,
-                      width: isSelected ? 40 : 32,
-                      height: isSelected ? 44 : 36,
-                      alignment: Alignment.topCenter,
-                      child: _CategoryPin(
-                        icon: icon,
-                        color: color,
-                        selected: isSelected,
-                        onTap: () => onMarkerTap(location),
+                if (activeRoute != null)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: activeRoute!.points,
+                        color: routeColor,
+                        strokeWidth: 5,
+                        borderStrokeWidth: 2,
+                        borderColor: Colors.white.withValues(alpha: 0.90),
                       ),
-                    );
-                  }).toList(growable: false),
+                    ],
+                  ),
+                MarkerLayer(
+                  markers: [
+                    ...locations.map((location) {
+                      final isSelected = location == selectedLocation;
+                      return Marker(
+                        point: location.position,
+                        width: isSelected ? 40 : 32,
+                        height: isSelected ? 44 : 36,
+                        alignment: Alignment.topCenter,
+                        child: _CategoryPin(
+                          icon: icon,
+                          color: color,
+                          selected: isSelected,
+                          onTap: () => onMarkerTap(location),
+                        ),
+                      );
+                    }),
+                    if (currentPosition != null)
+                      Marker(
+                        point: LatLng(
+                          currentPosition!.latitude,
+                          currentPosition!.longitude,
+                        ),
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        child: const _CategoryUserMarker(),
+                      ),
+                  ],
                 ),
               ],
             ),
+            if (loadingRoute)
+              const Center(
+                child: CircularProgressIndicator(),
+              ),
             Positioned(
               top: 14,
               left: 14,
@@ -483,44 +673,185 @@ class _CategoryMap extends StatelessWidget {
               left: 12,
               right: 12,
               bottom: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 8,
+              child: activeRoute == null || routeDestination == null
+                  ? _CategoryMapBanner(
+                      icon: icon,
+                      color: color,
+                      text: 'Exibindo apenas: $title',
+                    )
+                  : _CategoryRouteBanner(
+                      destination: routeDestination!,
+                      route: activeRoute!,
+                      color: routeColor,
+                      onClearRoute: onClearRoute,
                     ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(icon, color: color, size: 19),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Exibindo apenas: $title',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF1F2937),
-                          fontSize: 13,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _CategoryMapBanner extends StatelessWidget {
+  const _CategoryMapBanner({
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 10,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: color, size: 19),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF1F2937),
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryRouteBanner extends StatelessWidget {
+  const _CategoryRouteBanner({
+    required this.destination,
+    required this.route,
+    required this.color,
+    required this.onClearRoute,
+  });
+
+  final MapLocation destination;
+  final RouteResult route;
+  final Color color;
+  final VoidCallback onClearRoute;
+
+  @override
+  Widget build(BuildContext context) {
+    final distanceKm = route.distanceMeters / 1000;
+    final durationMinutes = (route.durationSeconds / 60).round();
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(destination.icon, color: color, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  destination.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1F2937),
+                    fontSize: 13,
+                  ),
+                ),
+                Text(
+                  '${distanceKm.toStringAsFixed(1)} km • $durationMinutes min',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: onClearRoute,
+            icon: const Icon(Icons.close, size: 18),
+            tooltip: 'Cancelar rota',
+            visualDensity: VisualDensity.compact,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CategoryUserMarker extends StatelessWidget {
+  const _CategoryUserMarker();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: const Color(0xFF2563EB).withValues(alpha: 0.16),
+            shape: BoxShape.circle,
+          ),
+        ),
+        Container(
+          width: 22,
+          height: 22,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.20),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.my_location,
+            color: Color(0xFF2563EB),
+            size: 16,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1046,7 +1377,7 @@ class _LocationDetailsSheet extends StatelessWidget {
               _DetailLine(
                 icon: Icons.location_on_outlined,
                 label: 'Local',
-                value: location.city,
+                value: location.address ?? location.city,
               ),
               _DetailLine(
                 icon: Icons.verified_outlined,
@@ -1056,12 +1387,12 @@ class _LocationDetailsSheet extends StatelessWidget {
               _DetailLine(
                 icon: Icons.schedule,
                 label: 'Horario',
-                value: 'Nao informado',
+                value: location.openingHours ?? 'Nao informado',
               ),
               _DetailLine(
                 icon: Icons.phone_outlined,
                 label: 'Telefone',
-                value: 'Nao informado',
+                value: location.phone ?? 'Nao informado',
               ),
               if (location.description != null)
                 _DetailLine(
@@ -1076,7 +1407,7 @@ class _LocationDetailsSheet extends StatelessWidget {
                     child: OutlinedButton.icon(
                       onPressed: onRoute,
                       icon: const Icon(Icons.near_me_outlined),
-                      label: const Text('Ver rota'),
+                      label: const Text('Traçar rota'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: color,
                         side: BorderSide(color: color),
