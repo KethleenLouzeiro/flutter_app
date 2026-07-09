@@ -13,7 +13,7 @@ class HotelsScreen extends StatelessWidget {
       subtitle: 'Encontre hospedagens reais confirmadas',
       emptyMessage: 'Nenhum hotel confirmado encontrado para esta busca.',
       icon: Icons.hotel,
-      color: Color(0xFF9C27B0),
+      color: Color(0xFF7B1FA2),
       categories: [MapLocationCategory.hotel],
       searchHint: 'Pesquisar hotel...',
     );

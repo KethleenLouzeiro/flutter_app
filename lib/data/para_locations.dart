@@ -3,17 +3,17 @@ import 'package:latlong2/latlong.dart';
 
 import '../models/map_location.dart';
 
-const Color _tourismColor = Colors.orange;
-const Color _marketColor = Color.fromARGB(255, 106, 67, 184);
-const Color _restaurantColor = Color.fromARGB(255, 67, 184, 77);
-const Color _hotelColor = Colors.purple;
-const Color _hospitalColor = Colors.red;
-const Color _pharmacyColor = Colors.green;
-const Color _petColor = Colors.teal;
+const Color _tourismColor = Color(0xFFFF8F00);
+const Color _marketColor = Color(0xFF8B5E00);
+const Color _restaurantColor = Color(0xFF2E7D32);
+const Color _hotelColor = Color(0xFF7B1FA2);
+const Color _hospitalColor = Color(0xFFE53935);
+const Color _pharmacyColor = Color(0xFF1E88E5);
+const Color _petColor = Color(0xFF00897B);
 const Color _repairColor = Color.fromARGB(255, 28, 25, 34);
 const Color _gasColor = Color(0xFFC91508);
-const Color _riverPortColor = Colors.blue;
-const Color _terminalColor = Color.fromARGB(255, 99, 64, 0);
+const Color _riverPortColor = Color(0xFF0891B2);
+const Color _terminalColor = Color(0xFF2563EB);
 
 const List<MapLocation> paraLocations = [
   // Atracoes, praias, orlas, ilhas e patrimonio historico.
@@ -574,6 +574,96 @@ const List<MapLocation> paraLocations = [
     description:
         'Ilha ribeirinha proxima a Belem, conhecida pelo turismo e gastronomia.',
   ),
+  MapLocation(
+    name: 'Praca da Biblia Paragominas',
+    city: 'Paragominas',
+    category: MapLocationCategory.touristSpot,
+    position: LatLng(-2.9953431, -47.3532588),
+    icon: Icons.park,
+    color: _tourismColor,
+    address: 'Angelim, Paragominas',
+    description: 'Praca publica cadastrada na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Lago Verde Paragominas',
+    city: 'Paragominas',
+    category: MapLocationCategory.naturalAttraction,
+    position: LatLng(-2.9984040, -47.3466992),
+    icon: Icons.water,
+    color: _tourismColor,
+    address: 'Angelim, Paragominas',
+    description: 'Lago urbano cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Praia de Maruda',
+    city: 'Marapanim',
+    category: MapLocationCategory.beach,
+    position: LatLng(-0.6232023, -47.6326832),
+    icon: Icons.beach_access,
+    color: _tourismColor,
+    description:
+        'Praia de Marapanim cadastrada na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Igreja Matriz de Vigia',
+    city: 'Vigia',
+    category: MapLocationCategory.historicSite,
+    position: LatLng(-0.8557728, -48.1453295),
+    icon: Icons.church,
+    color: _tourismColor,
+    address: 'Travessa do Solimao, Vigia',
+    description: 'Igreja matriz cadastrada na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Parque Ambiental de Ananindeua',
+    city: 'Ananindeua',
+    category: MapLocationCategory.naturalAttraction,
+    position: LatLng(-1.3837653, -48.4061306),
+    icon: Icons.park,
+    color: _tourismColor,
+    address: 'Providencia, Ananindeua',
+    description: 'Parque ambiental cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Praia do Caripi',
+    city: 'Barcarena',
+    category: MapLocationCategory.beach,
+    position: LatLng(-1.4906130, -48.7046064),
+    icon: Icons.beach_access,
+    color: _tourismColor,
+    address: 'Murucupi, Barcarena',
+    description: 'Praia cadastrada na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Praia do Paraiso',
+    city: 'Mosqueiro',
+    category: MapLocationCategory.beach,
+    position: LatLng(-1.0657096, -48.3791562),
+    icon: Icons.beach_access,
+    color: _tourismColor,
+    address: 'Paraiso, Mosqueiro, Belem',
+    description: 'Praia cadastrada na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Orla de Icoaraci',
+    city: 'Icoaraci',
+    category: MapLocationCategory.touristSpot,
+    position: LatLng(-1.2973728, -48.4899754),
+    icon: Icons.water,
+    color: _tourismColor,
+    address: 'Cruzeiro, Icoaraci, Belem',
+    description: 'Orla publica cadastrada na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Praia Grande de Outeiro',
+    city: 'Outeiro',
+    category: MapLocationCategory.beach,
+    position: LatLng(-1.2555972, -48.4670998),
+    icon: Icons.beach_access,
+    color: _tourismColor,
+    address: 'Sao Joao do Outeiro, Belem',
+    description: 'Praia cadastrada na base OpenStreetMap/Nominatim.',
+  ),
   // Saude.
   MapLocation(
     name: 'Hospital Porto Dias',
@@ -700,6 +790,147 @@ const List<MapLocation> paraLocations = [
     description:
         'Hospital municipal cadastrado na base OpenStreetMap/Nominatim.',
   ),
+  MapLocation(
+    name: 'Hospital Publico Regional dos Caetes',
+    city: 'Capanema',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-1.1904617, -47.1719347),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Avenida Barao de Capanema, 3191, Capanema',
+    description: 'Hospital cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Hospital Municipal de Paragominas',
+    city: 'Paragominas',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-2.9927841, -47.3581424),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Avenida Presidente Vargas, 345, Paragominas',
+    description:
+        'Hospital municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Hospital Municipal Canaa dos Carajas',
+    city: 'Canaa dos Carajas',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-6.5291965, -49.8537079),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Avenida Juscelino Kubitschek, Canaa dos Carajas',
+    description:
+        'Hospital municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Hospital Municipal Orzeu Jonas Guida',
+    city: 'Sao Felix do Xingu',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-6.6422724, -51.9922634),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Travessa Fernando Guilhon, Sao Felix do Xingu',
+    description:
+        'Hospital municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Hospital Municipal Sao Francisco',
+    city: 'Novo Repartimento',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-4.2502627, -49.9486141),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Travessa Rio Jordao, Novo Repartimento',
+    description:
+        'Hospital municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Hospital Municipal de Almeirim',
+    city: 'Almeirim',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-1.5289208, -52.5816698),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Travessa Barreiras, Almeirim',
+    description:
+        'Hospital municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Hospital Municipal de Portel',
+    city: 'Portel',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-1.9349476, -50.8151360),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Avenida Magalhaes Barata, Portel',
+    description:
+        'Hospital municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'UPA de Benevides',
+    city: 'Benevides',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-1.3630408, -48.2479313),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Rua Lauretina Ramos, Benevides',
+    description:
+        'Unidade de pronto atendimento cadastrada na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Hospital Municipal de Vigia',
+    city: 'Vigia',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-0.8625334, -48.1419379),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Avenida Barao de Guajara, Vigia',
+    description:
+        'Hospital municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Hospital Municipal Wandick Gutierrez',
+    city: 'Barcarena',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-1.5050653, -48.6228307),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Travessa Santo Antonio, 356, Barcarena',
+    description:
+        'Hospital municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Hospital Regional Abelardo Santos',
+    city: 'Icoaraci',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-1.3003748, -48.4690662),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Rodovia Augusto Montenegro, Icoaraci, Belem',
+    description:
+        'Hospital regional cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Hospital Doutor Roberto Macedo',
+    city: 'Icoaraci',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-1.3372523, -48.4526747),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Rua Principal, Parque Guajara, Icoaraci',
+    description: 'Hospital cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'UPA de Icoaraci',
+    city: 'Icoaraci',
+    category: MapLocationCategory.hospital,
+    position: LatLng(-1.3158540, -48.4563926),
+    icon: Icons.local_hospital,
+    color: _hospitalColor,
+    address: 'Alameda Fortaleza, Icoaraci, Belem',
+    description:
+        'Unidade de pronto atendimento cadastrada na base OpenStreetMap/Nominatim.',
+  ),
   // Hoteis.
   MapLocation(
     name: 'Hotel Sagres',
@@ -821,6 +1052,16 @@ const List<MapLocation> paraLocations = [
     icon: Icons.hotel,
     color: _hotelColor,
     address: 'Avenida Conego Batista Campos, Pioneiro, Barcarena',
+    description: 'Hotel cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Samauma Park Hotel',
+    city: 'Barcarena',
+    category: MapLocationCategory.hotel,
+    position: LatLng(-1.4935158, -48.7085487),
+    icon: Icons.hotel,
+    color: _hotelColor,
+    address: 'Avenida Beira Mar, Murucupi, Barcarena',
     description: 'Hotel cadastrado na base OpenStreetMap/Nominatim.',
   ),
   // Restaurantes.
@@ -1008,6 +1249,39 @@ const List<MapLocation> paraLocations = [
     color: _marketColor,
   ),
   MapLocation(
+    name: 'Mercado Municipal de Carne de Capanema',
+    city: 'Capanema',
+    category: MapLocationCategory.market,
+    position: LatLng(-1.1966923, -47.1873517),
+    icon: Icons.local_grocery_store,
+    color: _marketColor,
+    address: 'Rua Leandro Pinheiro, Capanema',
+    description:
+        'Mercado municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Mercado Municipal de Capanema',
+    city: 'Capanema',
+    category: MapLocationCategory.market,
+    position: LatLng(-1.1906631, -47.1786074),
+    icon: Icons.local_grocery_store,
+    color: _marketColor,
+    address: 'Rua 28 de Outubro, Centro, Capanema',
+    description:
+        'Mercado municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Mercado Municipal de Benevides',
+    city: 'Benevides',
+    category: MapLocationCategory.market,
+    position: LatLng(-1.3605889, -48.2417206),
+    icon: Icons.local_grocery_store,
+    color: _marketColor,
+    address: 'Avenida Joaquim Pereira de Queiros, Benevides',
+    description:
+        'Mercado municipal cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
     name: 'Mercado Municipal da Guanabara',
     city: 'Ananindeua',
     category: MapLocationCategory.market,
@@ -1086,6 +1360,66 @@ const List<MapLocation> paraLocations = [
     icon: Icons.local_grocery_store,
     color: _marketColor,
     address: 'Avenida Doutor Freitas, Souza, Belem',
+    description: 'Supermercado cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Supermercado Formosa Cidade Nova',
+    city: 'Ananindeua',
+    category: MapLocationCategory.market,
+    position: LatLng(-1.3683499, -48.4045090),
+    icon: Icons.local_grocery_store,
+    color: _marketColor,
+    address: 'Avenida Doutor Nonato Sanova, Cidade Nova, Ananindeua',
+    description: 'Supermercado cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Assai Atacadista Ananindeua',
+    city: 'Ananindeua',
+    category: MapLocationCategory.market,
+    position: LatLng(-1.3677932, -48.3686332),
+    icon: Icons.local_grocery_store,
+    color: _marketColor,
+    address: 'Rodovia BR-316, Ananindeua',
+    description: 'Supermercado cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Atacadao Independencia Ananindeua',
+    city: 'Ananindeua',
+    category: MapLocationCategory.market,
+    position: LatLng(-1.3678922, -48.3675959),
+    icon: Icons.local_grocery_store,
+    color: _marketColor,
+    address: 'Avenida Independencia, Ananindeua',
+    description: 'Supermercado cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Atacadao BR-316 Ananindeua',
+    city: 'Ananindeua',
+    category: MapLocationCategory.market,
+    position: LatLng(-1.3910203, -48.4128278),
+    icon: Icons.local_grocery_store,
+    color: _marketColor,
+    address: 'Rodovia BR-316, Guanabara, Ananindeua',
+    description: 'Supermercado cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Assai Atacadista Castanhal',
+    city: 'Castanhal',
+    category: MapLocationCategory.market,
+    position: LatLng(-1.2954180, -47.8941786),
+    icon: Icons.local_grocery_store,
+    color: _marketColor,
+    address: 'Avenida Presidente Getulio Vargas, Castanhal',
+    description: 'Supermercado cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Atacadao Castanhal',
+    city: 'Castanhal',
+    category: MapLocationCategory.market,
+    position: LatLng(-1.2971595, -47.9556624),
+    icon: Icons.local_grocery_store,
+    color: _marketColor,
+    address: 'Rodovia BR-316, Castanhal',
     description: 'Supermercado cadastrado na base OpenStreetMap/Nominatim.',
   ),
   // Postos, oficinas, farmacias e petshops com fonte OSM/Nominatim.
@@ -1191,6 +1525,17 @@ const List<MapLocation> paraLocations = [
     position: LatLng(-1.7338624, -48.8664176),
     icon: Icons.local_gas_station,
     color: _gasColor,
+    description:
+        'Posto de combustivel cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Posto Pombal II Marituba',
+    city: 'Marituba',
+    category: MapLocationCategory.gasStation,
+    position: LatLng(-1.3673181, -48.3291380),
+    icon: Icons.local_gas_station,
+    color: _gasColor,
+    address: 'Rodovia BR-316, Nova Marituba, Marituba',
     description:
         'Posto de combustivel cadastrado na base OpenStreetMap/Nominatim.',
   ),
@@ -1466,6 +1811,16 @@ const List<MapLocation> paraLocations = [
     address: 'Rodovia BR-316, Aguas Lindas, Ananindeua',
     description: 'Farmacia cadastrada na base OpenStreetMap/Nominatim.',
   ),
+  MapLocation(
+    name: 'Pague Menos Centro Ananindeua',
+    city: 'Ananindeua',
+    category: MapLocationCategory.pharmacy,
+    position: LatLng(-1.3663869, -48.3736217),
+    icon: Icons.local_pharmacy,
+    color: _pharmacyColor,
+    address: 'Rua Claudio Sanders, 80, Ananindeua',
+    description: 'Farmacia cadastrada na base OpenStreetMap/Nominatim.',
+  ),
   // Portos e terminais hidroviarios.
   MapLocation(
     name: 'Terminal Hidroviario de Belem',
@@ -1562,6 +1917,17 @@ const List<MapLocation> paraLocations = [
     position: LatLng(-1.918300, -55.516900),
     icon: Icons.directions_boat,
     color: _riverPortColor,
+  ),
+  MapLocation(
+    name: 'Terminal Hidroviario de Icoaraci',
+    city: 'Icoaraci',
+    category: MapLocationCategory.riverPort,
+    position: LatLng(-1.2991734, -48.4898913),
+    icon: Icons.directions_boat,
+    color: _riverPortColor,
+    address: 'Rua Siqueira Mendes, Icoaraci, Belem',
+    description:
+        'Terminal hidroviario cadastrado na base OpenStreetMap/Nominatim.',
   ),
   // Terminais rodoviarios.
   MapLocation(
@@ -1661,6 +2027,17 @@ const List<MapLocation> paraLocations = [
     color: _terminalColor,
   ),
   MapLocation(
+    name: 'Terminal Rodoviario de Barcarena',
+    city: 'Barcarena',
+    category: MapLocationCategory.busTerminal,
+    position: LatLng(-1.5289742, -48.6873891),
+    icon: Icons.directions_bus,
+    color: _terminalColor,
+    address: 'Rua Padre Raimundo Severino de Matos, Barcarena',
+    description:
+        'Terminal rodoviario cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
     name: 'Terminal Rodoviario de Abaetetuba',
     city: 'Abaetetuba',
     category: MapLocationCategory.busTerminal,
@@ -1692,5 +2069,82 @@ const List<MapLocation> paraLocations = [
     address: 'Redencao',
     description:
         'Terminal rodoviario cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Estacao Rodoviaria Raimundo Felipe Iglesias',
+    city: 'Capanema',
+    category: MapLocationCategory.busTerminal,
+    position: LatLng(-1.1928263, -47.1827795),
+    icon: Icons.directions_bus,
+    color: _terminalColor,
+    address: 'Avenida Joao Paulo II, Capanema',
+    description:
+        'Terminal rodoviario cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Terminal Rodoviario de Paragominas',
+    city: 'Paragominas',
+    category: MapLocationCategory.busTerminal,
+    position: LatLng(-2.9899596, -47.3755149),
+    icon: Icons.directions_bus,
+    color: _terminalColor,
+    address: 'PA-256, Paragominas',
+    description:
+        'Terminal rodoviario cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Terminal Rodoviario de Canaa dos Carajas',
+    city: 'Canaa dos Carajas',
+    category: MapLocationCategory.busTerminal,
+    position: LatLng(-6.5194636, -49.8547027),
+    icon: Icons.directions_bus,
+    color: _terminalColor,
+    address: 'Avenida Weine Cavalcante, Canaa dos Carajas',
+    description:
+        'Terminal rodoviario cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Rodoviaria de Sao Felix do Xingu',
+    city: 'Sao Felix do Xingu',
+    category: MapLocationCategory.busTerminal,
+    position: LatLng(-6.6428408, -51.9606224),
+    icon: Icons.directions_bus,
+    color: _terminalColor,
+    address: 'Rua do Bambu, Sao Felix do Xingu',
+    description:
+        'Terminal rodoviario cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Rodoviaria de Tailandia',
+    city: 'Tailandia',
+    category: MapLocationCategory.busTerminal,
+    position: LatLng(-2.9389171, -48.9568154),
+    icon: Icons.directions_bus,
+    color: _terminalColor,
+    address: 'Travessa do Gas, Tailandia',
+    description:
+        'Terminal rodoviario cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Terminal Rodoviario de Novo Repartimento',
+    city: 'Novo Repartimento',
+    category: MapLocationCategory.busTerminal,
+    position: LatLng(-4.2455516, -49.9484334),
+    icon: Icons.directions_bus,
+    color: _terminalColor,
+    address: 'Avenida Beija-Flor, Novo Repartimento',
+    description:
+        'Terminal rodoviario cadastrado na base OpenStreetMap/Nominatim.',
+  ),
+  MapLocation(
+    name: 'Terminal Hidroviario Absalao Gomes Cardoso',
+    city: 'Portel',
+    category: MapLocationCategory.riverPort,
+    position: LatLng(-1.9385515, -50.8246658),
+    icon: Icons.directions_boat,
+    color: _riverPortColor,
+    address: 'Avenida Duque de Caxias, Portel',
+    description:
+        'Terminal hidroviario cadastrado na base OpenStreetMap/Nominatim.',
   ),
 ];

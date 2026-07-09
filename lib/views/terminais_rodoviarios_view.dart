@@ -13,7 +13,7 @@ class BusTerminalsScreen extends StatelessWidget {
       subtitle: 'Encontre terminais de onibus confirmados',
       emptyMessage: 'Nenhum terminal rodoviario confirmado encontrado.',
       icon: Icons.directions_bus,
-      color: Color.fromARGB(255, 99, 64, 0),
+      color: Color(0xFF2563EB),
       categories: [MapLocationCategory.busTerminal],
       searchHint: 'Pesquisar terminal rodoviario...',
     );

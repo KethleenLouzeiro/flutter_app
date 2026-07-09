@@ -13,7 +13,7 @@ class RiverTerminalsScreen extends StatelessWidget {
       subtitle: 'Encontre portos e terminais fluviais',
       emptyMessage: 'Nenhum terminal hidroviario confirmado encontrado.',
       icon: Icons.directions_boat,
-      color: Colors.blue,
+      color: Color(0xFF0891B2),
       categories: [MapLocationCategory.riverPort],
       searchHint: 'Pesquisar porto ou terminal...',
     );

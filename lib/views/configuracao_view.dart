@@ -8,9 +8,17 @@ import 'package:flutter_app/views/politica_privacidade_view.dart';
 import 'package:flutter_app/views/editar_perfil_view.dart';
 import 'package:flutter_app/views/splash_view.dart';
 import 'package:flutter_app/views/tutorial_view.dart';
+import 'package:flutter_app/widgets/viagebem_message.dart';
 
 class ConfiguracaoView extends StatelessWidget {
-  const ConfiguracaoView({super.key});
+  const ConfiguracaoView({
+    super.key,
+    this.showBackButton = true,
+    this.onProfileUpdated,
+  });
+
+  final bool showBackButton;
+  final VoidCallback? onProfileUpdated;
 
   @override
   Widget build(BuildContext context) {
@@ -19,15 +27,18 @@ class ConfiguracaoView extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
+        automaticallyImplyLeading: showBackButton,
+        leading: showBackButton
+            ? IconButton(
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              )
+            : null,
         title: const Text(
           'Configurações',
           style: TextStyle(
@@ -70,12 +81,11 @@ class ConfiguracaoView extends StatelessWidget {
                     icon: Icons.dark_mode_outlined,
                     title: 'Modo Escuro',
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Função em desenvolvimento',
-                          ),
-                        ),
+                      showViageBemMessage(
+                        context,
+                        title: 'Função em desenvolvimento',
+                        subtitle: 'Essa opção estará disponível em breve.',
+                        type: ViageBemMessageType.info,
                       );
                     },
                   ),
@@ -137,7 +147,11 @@ class ConfiguracaoView extends StatelessWidget {
                       if (!context.mounted) return;
 
                       if (resultado == true) {
-                        Navigator.pop(context, true);
+                        if (showBackButton) {
+                          Navigator.pop(context, true);
+                        } else {
+                          onProfileUpdated?.call();
+                        }
                       }
                     },
                   ),
@@ -269,6 +283,7 @@ class ConfiguracaoView extends StatelessWidget {
       _mostrarMensagem(
         context,
         'Nao foi possivel sair da conta agora.',
+        type: ViageBemMessageType.error,
       );
     }
   }
@@ -336,6 +351,7 @@ class ConfiguracaoView extends StatelessWidget {
         _mostrarMensagem(
           context,
           'Por segurança, faça login novamente antes de excluir sua conta.',
+          type: ViageBemMessageType.warning,
         );
         return;
       }
@@ -343,6 +359,7 @@ class ConfiguracaoView extends StatelessWidget {
       _mostrarMensagem(
         context,
         'Nao foi possivel excluir sua conta agora.',
+        type: ViageBemMessageType.error,
       );
     } catch (_) {
       if (!context.mounted) return;
@@ -350,6 +367,7 @@ class ConfiguracaoView extends StatelessWidget {
       _mostrarMensagem(
         context,
         'Nao foi possivel excluir sua conta agora.',
+        type: ViageBemMessageType.error,
       );
     }
   }
@@ -417,14 +435,15 @@ class ConfiguracaoView extends StatelessWidget {
     );
   }
 
-  void _mostrarMensagem(BuildContext context, String mensagem) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text(mensagem),
-        ),
-      );
+  void _mostrarMensagem(
+    BuildContext context,
+    String mensagem, {
+    ViageBemMessageType type = ViageBemMessageType.info,
+  }) {
+    showViageBemMessage(
+      context,
+      title: mensagem,
+      type: type,
+    );
   }
 }

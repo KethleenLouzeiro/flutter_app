@@ -14,7 +14,7 @@ class PetsScreen extends StatelessWidget {
       emptyMessage:
           'Ainda nao ha petshops reais confirmados nesta base. Eles serao adicionados somente com fonte confiavel.',
       icon: Icons.pets,
-      color: Colors.teal,
+      color: Color(0xFF00897B),
       categories: [MapLocationCategory.petShop],
       searchHint: 'Pesquisar petshop...',
     );

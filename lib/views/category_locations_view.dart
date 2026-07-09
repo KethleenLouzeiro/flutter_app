@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/para_locations.dart';
 import '../models/map_location.dart';
 import '../services/route_service.dart';
+import '../widgets/viagebem_message.dart';
+import 'navigation_map_view.dart';
 
 class CategoryLocationsView extends StatefulWidget {
   const CategoryLocationsView({
@@ -33,6 +36,7 @@ class CategoryLocationsView extends StatefulWidget {
 
 class _CategoryLocationsViewState extends State<CategoryLocationsView> {
   static const LatLng _defaultCenter = LatLng(-1.4558, -48.4902);
+  static const String _favoritesKey = 'viagebem_favorite_locations';
 
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
@@ -41,6 +45,7 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
   String _query = '';
   MapLocation? _selectedLocation;
   Position? _currentPosition;
+  Set<String> _favoriteKeys = {};
   bool _loadingRoute = false;
   RouteResult? _activeRoute;
   MapLocation? _routeDestination;
@@ -87,6 +92,12 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
     super.dispose();
   }
 
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
   void _selectLocation(MapLocation location) {
     setState(() {
       _selectedLocation = location;
@@ -108,18 +119,37 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
           categoryTitle: widget.title,
           color: widget.color,
           icon: widget.icon,
+          isFavorite: _favoriteKeys.contains(_locationKey(location)),
           onRoute: () {
             Navigator.pop(context);
             _traceRoute(location);
           },
-          onFavorite: () => _favorite(location),
+          onStartTrip: () {
+            Navigator.pop(context);
+            _startTrip(location);
+          },
+          onFavorite: () => _toggleFavorite(location),
         );
       },
     );
   }
 
-  Future<void> _traceRoute(MapLocation location) async {
-    if (_loadingRoute) return;
+  Future<void> _loadFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList(_favoritesKey) ?? <String>[];
+
+    if (!mounted) return;
+
+    setState(() {
+      _favoriteKeys = saved.toSet();
+    });
+  }
+
+  Future<bool> _traceRoute(
+    MapLocation location, {
+    bool showSuccessMessage = true,
+  }) async {
+    if (_loadingRoute) return false;
 
     setState(() {
       _loadingRoute = true;
@@ -130,7 +160,7 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
       final canUseLocation = await _ensureLocationPermission();
 
       if (!canUseLocation) {
-        return;
+        return false;
       }
 
       final position = await Geolocator.getCurrentPosition(
@@ -140,7 +170,7 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
 
       if (!position.latitude.isFinite || !position.longitude.isFinite) {
         _showMessage('Localizacao atual invalida para tracar rota.');
-        return;
+        return false;
       }
 
       final route = await _routeService.fetchRoute(
@@ -148,7 +178,7 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
         destination: location.position,
       );
 
-      if (!mounted) return;
+      if (!mounted) return false;
 
       setState(() {
         _currentPosition = position;
@@ -157,11 +187,20 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
       });
 
       _fitRoute(route.points);
-      _showMessage('Rota para ${location.name} tracada no mapa.');
+      if (showSuccessMessage) {
+        _showMessage(
+          'Rota traçada no mapa',
+          subtitle: location.name,
+          type: ViageBemMessageType.success,
+        );
+      }
+      return true;
     } on RouteServiceException catch (error) {
       _showMessage(error.message);
+      return false;
     } catch (_) {
       _showMessage('Nao foi possivel calcular a rota agora.');
+      return false;
     } finally {
       if (mounted) {
         setState(() {
@@ -169,6 +208,28 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
         });
       }
     }
+  }
+
+  Future<void> _startTrip(MapLocation location) async {
+    final hasRouteForDestination = _activeRoute != null &&
+        _routeDestination != null &&
+        _locationKey(_routeDestination!) == _locationKey(location);
+
+    setState(() {
+      _selectedLocation = location;
+    });
+
+    await Navigator.push<void>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => NavigationMapView(
+          destination: location,
+          routeColor: _routeColorFor(location),
+          initialRoute: hasRouteForDestination ? _activeRoute : null,
+          initialPosition: _currentPosition,
+        ),
+      ),
+    );
   }
 
   Future<bool> _ensureLocationPermission() async {
@@ -217,59 +278,80 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
     });
   }
 
+  String _locationKey(MapLocation location) {
+    return '${location.category.name}|${location.city}|${location.name}';
+  }
+
   Color _routeColorFor(MapLocation location) {
     switch (location.category) {
       case MapLocationCategory.gasStation:
         return const Color(0xFFC91508);
       case MapLocationCategory.restaurant:
-        return const Color.fromARGB(255, 67, 184, 77);
+        return const Color(0xFF2E7D32);
       case MapLocationCategory.hotel:
-        return Colors.purple;
+        return const Color(0xFF7B1FA2);
       case MapLocationCategory.hospital:
-        return Colors.redAccent;
+        return const Color(0xFFE53935);
       case MapLocationCategory.market:
-        return const Color.fromARGB(255, 106, 67, 184);
+        return const Color(0xFF8B5E00);
       case MapLocationCategory.petShop:
-        return Colors.teal;
+        return const Color(0xFF00897B);
       case MapLocationCategory.repairShop:
         return const Color.fromARGB(255, 28, 25, 34);
       case MapLocationCategory.touristSpot:
       case MapLocationCategory.beach:
       case MapLocationCategory.naturalAttraction:
       case MapLocationCategory.historicSite:
-        return Colors.orange;
+        return const Color(0xFFFF8F00);
       case MapLocationCategory.pharmacy:
-        return Colors.green;
+        return const Color(0xFF1E88E5);
       case MapLocationCategory.riverPort:
-        return Colors.blue;
+        return const Color(0xFF0891B2);
       case MapLocationCategory.busTerminal:
-        return const Color.fromARGB(255, 99, 64, 0);
+        return const Color(0xFF2563EB);
     }
   }
 
-  void _showMessage(String message) {
+  void _showMessage(
+    String message, {
+    String? subtitle,
+    ViageBemMessageType type = ViageBemMessageType.error,
+  }) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text(message),
-        ),
-      );
+    showViageBemMessage(
+      context,
+      title: message,
+      subtitle: subtitle,
+      type: type,
+    );
   }
 
-  void _favorite(MapLocation location) {
+  Future<void> _toggleFavorite(MapLocation location) async {
     Navigator.pop(context);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text('${location.name} adicionado aos favoritos'),
-        ),
-      );
+    final key = _locationKey(location);
+    final updated = Set<String>.from(_favoriteKeys);
+    final added = updated.add(key);
+
+    if (!added) {
+      updated.remove(key);
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_favoritesKey, updated.toList()..sort());
+
+    if (!mounted) return;
+
+    setState(() {
+      _favoriteKeys = updated;
+    });
+
+    showViageBemMessage(
+      context,
+      title: added ? 'Favorito adicionado' : 'Favorito removido',
+      subtitle: location.name,
+      type: ViageBemMessageType.success,
+    );
   }
 
   @override
@@ -364,14 +446,12 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
   }
 
   void _showFilterInfo() {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        const SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text('Filtros avancados serao conectados aos dados reais.'),
-        ),
-      );
+    showViageBemMessage(
+      context,
+      title: 'Filtros avançados',
+      subtitle: 'Serão conectados aos dados reais.',
+      type: ViageBemMessageType.info,
+    );
   }
 
   String _normalize(String value) {
@@ -1248,7 +1328,9 @@ class _LocationDetailsSheet extends StatelessWidget {
     required this.categoryTitle,
     required this.color,
     required this.icon,
+    required this.isFavorite,
     required this.onRoute,
+    required this.onStartTrip,
     required this.onFavorite,
   });
 
@@ -1256,13 +1338,15 @@ class _LocationDetailsSheet extends StatelessWidget {
   final String categoryTitle;
   final Color color;
   final IconData icon;
+  final bool isFavorite;
   final VoidCallback onRoute;
+  final VoidCallback onStartTrip;
   final VoidCallback onFavorite;
 
   @override
   Widget build(BuildContext context) {
     return DraggableScrollableSheet(
-      initialChildSize: 0.52,
+      initialChildSize: 0.58,
       minChildSize: 0.36,
       maxChildSize: 0.86,
       builder: (context, scrollController) {
@@ -1421,9 +1505,9 @@ class _LocationDetailsSheet extends StatelessWidget {
                   const SizedBox(width: 12),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: onFavorite,
-                      icon: const Icon(Icons.star_border),
-                      label: const Text('Favoritar'),
+                      onPressed: onStartTrip,
+                      icon: const Icon(Icons.navigation_rounded),
+                      label: const Text('Iniciar viagem'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: color,
                         foregroundColor: Colors.white,
@@ -1436,6 +1520,25 @@ class _LocationDetailsSheet extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: onFavorite,
+                  icon: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                  ),
+                  label: Text(isFavorite ? 'Remover favorito' : 'Favoritar'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: color,
+                    side: BorderSide(color: color),
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

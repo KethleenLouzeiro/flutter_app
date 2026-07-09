@@ -13,7 +13,7 @@ class RestaurantsScreen extends StatelessWidget {
       subtitle: 'Encontre restaurantes reais e conhecidos',
       emptyMessage: 'Nenhum restaurante confirmado encontrado para esta busca.',
       icon: Icons.restaurant,
-      color: Color(0xFF43B84D),
+      color: Color(0xFF2E7D32),
       categories: [MapLocationCategory.restaurant],
       searchHint: 'Pesquisar restaurante...',
     );

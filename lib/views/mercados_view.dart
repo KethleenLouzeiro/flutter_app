@@ -13,7 +13,7 @@ class MarketsScreen extends StatelessWidget {
       subtitle: 'Encontre mercados e feiras confirmadas',
       emptyMessage: 'Nenhum mercado confirmado encontrado para esta busca.',
       icon: Icons.shopping_cart,
-      color: Color(0xFF6A43B8),
+      color: Color(0xFF8B5E00),
       categories: [MapLocationCategory.market],
       searchHint: 'Pesquisar mercado...',
     );

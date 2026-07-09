@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_app/services/route_service.dart';
 import 'package:flutter_app/views/calendario_view.dart';
 import 'package:flutter_app/views/configuracao_view.dart';
+import 'package:flutter_app/views/farmacias_view.dart';
 import 'package:flutter_app/views/hospitais_view.dart';
 import 'package:flutter_app/views/hoteis_view.dart';
 import 'package:flutter_app/views/mercados_view.dart';
@@ -23,9 +24,22 @@ import 'package:flutter_app/views/restaurantes_view.dart';
 import 'package:flutter_app/views/terminais_hidroviarios_view.dart';
 import 'package:flutter_app/views/terminais_rodoviarios_view.dart';
 import 'package:flutter_app/views/tutorial_view.dart';
+import 'package:flutter_app/widgets/viagebem_message.dart';
 
 import '../data/para_locations.dart';
 import '../models/map_location.dart';
+
+const Color _categoryGasColor = Color(0xFFC91508);
+const Color _categoryRestaurantColor = Color(0xFF2E7D32);
+const Color _categoryHotelColor = Color(0xFF7B1FA2);
+const Color _categoryHospitalColor = Color(0xFFE53935);
+const Color _categoryMarketColor = Color(0xFF8B5E00);
+const Color _categoryPetColor = Color(0xFF00897B);
+const Color _categoryRepairColor = Color(0xFF1C1922);
+const Color _categoryTourismColor = Color(0xFFFF8F00);
+const Color _categoryPharmacyColor = Color(0xFF1E88E5);
+const Color _categoryBusTerminalColor = Color(0xFF2563EB);
+const Color _categoryRiverPortColor = Color(0xFF0891B2);
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -49,17 +63,18 @@ class _DashboardViewState extends State<DashboardView> {
 
   int _selectedIndex = 0;
   Position? _currentPosition;
+  LatLng? _displayedUserPosition;
   StreamSubscription<Position>? _positionSubscription;
+  Timer? _markerAnimationTimer;
   double? _userHeadingRadians;
+  bool _trackingHighAccuracy = false;
   bool _loadingLocation = false;
   bool _loadingRoute = false;
   bool _navigationActive = false;
   RouteResult? _activeRoute;
   MapLocation? _routeDestination;
   String _query = '';
-  Set<MapLocationCategory> _activeCategories = {
-    for (final option in _categoryOptions) option.category,
-  };
+  Set<MapLocationCategory> _activeCategories = {};
   Set<String> _favoriteKeys = {};
 
   List<MapLocation> get _validLocations {
@@ -72,7 +87,8 @@ class _DashboardViewState extends State<DashboardView> {
     final normalizedQuery = _normalize(_query);
 
     return _validLocations.where((location) {
-      if (!_activeCategories.contains(location.category)) {
+      if (!_allCategoriesSelected &&
+          !_activeCategories.contains(location.category)) {
         return false;
       }
 
@@ -95,10 +111,11 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   bool get _allCategoriesSelected {
-    return _activeCategories.length == _categoryOptions.length &&
-        _categoryOptions.every(
-          (option) => _activeCategories.contains(option.category),
-        );
+    return _activeCategories.isEmpty ||
+        (_activeCategories.length == _categoryOptions.length &&
+            _categoryOptions.every(
+              (option) => _activeCategories.contains(option.category),
+            ));
   }
 
   String get _locationSummary {
@@ -109,12 +126,12 @@ class _DashboardViewState extends State<DashboardView> {
     }
 
     if (_allCategoriesSelected) {
-      return '$count locais no mapa';
+      return '$count locais encontrados';
     }
 
     _DashboardQuickFilter? selectedFilter;
 
-    for (final filter in _quickFilters) {
+    for (final filter in _filterOptions) {
       if (filter.categories == null) {
         continue;
       }
@@ -132,18 +149,48 @@ class _DashboardViewState extends State<DashboardView> {
     return '$count locais encontrados';
   }
 
-  String get _saudacao {
-    final hour = DateTime.now().hour;
-
-    if (hour >= 5 && hour < 12) {
-      return 'Bom dia';
+  IconData get _locationSummaryIcon {
+    if (_query.trim().isNotEmpty) {
+      return Icons.search_rounded;
     }
 
-    if (hour >= 12 && hour < 18) {
-      return 'Boa tarde';
+    if (_allCategoriesSelected) {
+      return Icons.location_on_rounded;
     }
 
-    return 'Boa noite';
+    for (final filter in _filterOptions) {
+      if (filter.categories == null) {
+        continue;
+      }
+
+      if (_sameCategorySet(filter.categories!, _activeCategories)) {
+        return filter.icon;
+      }
+    }
+
+    return Icons.location_on_rounded;
+  }
+
+  Color get _locationSummaryColor {
+    if (_query.trim().isNotEmpty) {
+      return const Color(0xFF4F46E5);
+    }
+
+    if (_allCategoriesSelected) {
+      return const Color(0xFF4F46E5);
+    }
+
+    for (final filter in _filterOptions) {
+      if (filter.categories == null) {
+        continue;
+      }
+
+      if (_sameCategorySet(filter.categories!, _activeCategories)) {
+        return filter.color;
+      }
+    }
+
+    return const Color(0xFF4F46E5);
   }
 
   String get _displayName {
@@ -173,6 +220,7 @@ class _DashboardViewState extends State<DashboardView> {
 
   @override
   void dispose() {
+    _markerAnimationTimer?.cancel();
     _positionSubscription?.cancel();
     _routeService.close();
     _searchController.dispose();
@@ -232,18 +280,12 @@ class _DashboardViewState extends State<DashboardView> {
       _favoriteKeys = updated;
     });
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text(
-            added
-                ? '${location.name} adicionado aos favoritos'
-                : '${location.name} removido dos favoritos',
-          ),
-        ),
-      );
+    showViageBemMessage(
+      context,
+      title: added ? 'Favorito adicionado' : 'Favorito removido',
+      subtitle: location.name,
+      type: ViageBemMessageType.success,
+    );
   }
 
   Future<void> _getCurrentLocation() async {
@@ -277,9 +319,12 @@ class _DashboardViewState extends State<DashboardView> {
 
       if (!mounted) return;
 
+      final previousPosition = _currentPosition;
+
       setState(() {
         _currentPosition = position;
-        _userHeadingRadians = _headingFromPosition(position);
+        _displayedUserPosition = LatLng(position.latitude, position.longitude);
+        _userHeadingRadians = _headingFromPosition(position, previousPosition);
       });
 
       _mapController.move(
@@ -297,8 +342,20 @@ class _DashboardViewState extends State<DashboardView> {
     }
   }
 
-  Future<void> _startLocationTracking({required bool centerOnFirstFix}) async {
-    if (_positionSubscription != null || _loadingLocation) return;
+  Future<void> _startLocationTracking({
+    required bool centerOnFirstFix,
+    bool highAccuracy = false,
+  }) async {
+    if (_loadingLocation) return;
+
+    if (_positionSubscription != null) {
+      if (_trackingHighAccuracy == highAccuracy) {
+        return;
+      }
+
+      await _positionSubscription?.cancel();
+      _positionSubscription = null;
+    }
 
     setState(() {
       _loadingLocation = true;
@@ -326,6 +383,10 @@ class _DashboardViewState extends State<DashboardView> {
 
       setState(() {
         _currentPosition = initialPosition;
+        _displayedUserPosition = LatLng(
+          initialPosition.latitude,
+          initialPosition.longitude,
+        );
         _userHeadingRadians = _headingFromPosition(initialPosition);
       });
 
@@ -336,9 +397,10 @@ class _DashboardViewState extends State<DashboardView> {
         );
       }
 
-      const locationSettings = LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 3,
+      final locationSettings = LocationSettings(
+        accuracy:
+            highAccuracy ? LocationAccuracy.best : LocationAccuracy.medium,
+        distanceFilter: highAccuracy ? 2 : 10,
       );
 
       _positionSubscription = Geolocator.getPositionStream(
@@ -349,6 +411,7 @@ class _DashboardViewState extends State<DashboardView> {
           _showMessage('Nao foi possivel acompanhar sua localizacao agora.');
         },
       );
+      _trackingHighAccuracy = highAccuracy;
     } catch (_) {
       _showMessage('Nao foi possivel obter sua localizacao agora.');
     } finally {
@@ -390,14 +453,75 @@ class _DashboardViewState extends State<DashboardView> {
   void _handlePositionUpdate(Position position) {
     if (!mounted || !_isUsablePosition(position)) return;
 
+    final previousPosition = _currentPosition;
+
     setState(() {
       _currentPosition = position;
-      _userHeadingRadians = _headingFromPosition(position);
+      _userHeadingRadians = _headingFromPosition(position, previousPosition);
     });
+
+    _animateUserMarkerTo(position);
 
     if (_navigationActive) {
       _centerMapOnUser();
     }
+  }
+
+  void _animateUserMarkerTo(Position position) {
+    final target = LatLng(position.latitude, position.longitude);
+    final start = _displayedUserPosition;
+
+    _markerAnimationTimer?.cancel();
+
+    if (start == null) {
+      setState(() {
+        _displayedUserPosition = target;
+      });
+      return;
+    }
+
+    final distanceMeters = Geolocator.distanceBetween(
+      start.latitude,
+      start.longitude,
+      target.latitude,
+      target.longitude,
+    );
+
+    if (distanceMeters < 1) {
+      setState(() {
+        _displayedUserPosition = target;
+      });
+      return;
+    }
+
+    const frameCount = 12;
+    var frame = 0;
+
+    _markerAnimationTimer = Timer.periodic(
+      const Duration(milliseconds: 30),
+      (timer) {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+
+        frame += 1;
+        final progress = frame / frameCount;
+        final eased = Curves.easeOutCubic.transform(progress.clamp(0, 1));
+
+        setState(() {
+          _displayedUserPosition = LatLng(
+            start.latitude + (target.latitude - start.latitude) * eased,
+            start.longitude + (target.longitude - start.longitude) * eased,
+          );
+        });
+
+        if (frame >= frameCount) {
+          timer.cancel();
+          _markerAnimationTimer = null;
+        }
+      },
+    );
   }
 
   bool _isUsablePosition(Position position) {
@@ -438,12 +562,36 @@ class _DashboardViewState extends State<DashboardView> {
     return true;
   }
 
-  double? _headingFromPosition(Position position) {
+  double? _headingFromPosition(Position position, [Position? previous]) {
     if (!position.heading.isFinite || position.heading < 0) {
+      if (previous != null) {
+        final distance = Geolocator.distanceBetween(
+          previous.latitude,
+          previous.longitude,
+          position.latitude,
+          position.longitude,
+        );
+
+        if (distance >= 1.5) {
+          return _bearingBetween(previous, position);
+        }
+      }
+
       return _userHeadingRadians;
     }
 
     return position.heading * math.pi / 180;
+  }
+
+  double _bearingBetween(Position from, Position to) {
+    final lat1 = from.latitude * math.pi / 180;
+    final lat2 = to.latitude * math.pi / 180;
+    final deltaLongitude = (to.longitude - from.longitude) * math.pi / 180;
+    final y = math.sin(deltaLongitude) * math.cos(lat2);
+    final x = math.cos(lat1) * math.sin(lat2) -
+        math.sin(lat1) * math.cos(lat2) * math.cos(deltaLongitude);
+
+    return math.atan2(y, x);
   }
 
   Future<bool> _traceRoute(
@@ -492,6 +640,8 @@ class _DashboardViewState extends State<DashboardView> {
     setState(() {
       _loadingRoute = true;
       _currentPosition = routeStart;
+      _displayedUserPosition =
+          LatLng(routeStart.latitude, routeStart.longitude);
       _userHeadingRadians = _headingFromPosition(routeStart);
     });
 
@@ -512,7 +662,11 @@ class _DashboardViewState extends State<DashboardView> {
 
       _fitRoute(route.points);
       if (showSuccessMessage) {
-        _showMessage('Rota para ${location.name} tracada no mapa.');
+        _showMessage(
+          'Rota traçada no mapa',
+          subtitle: location.name,
+          type: ViageBemMessageType.success,
+        );
       }
       return true;
     } on RouteServiceException catch (error) {
@@ -559,16 +713,34 @@ class _DashboardViewState extends State<DashboardView> {
       _routeDestination = location;
     });
 
+    await _startLocationTracking(
+      centerOnFirstFix: false,
+      highAccuracy: true,
+    );
+
     _centerMapOnUser();
-    _showMessage('Viagem para ${location.name} iniciada.');
+    _showMessage(
+      'Viagem iniciada',
+      subtitle: location.name,
+      type: ViageBemMessageType.success,
+    );
   }
 
   void _clearRoute() {
+    final wasNavigating = _navigationActive;
+
     setState(() {
       _activeRoute = null;
       _routeDestination = null;
       _navigationActive = false;
     });
+
+    if (wasNavigating) {
+      _startLocationTracking(
+        centerOnFirstFix: false,
+        highAccuracy: false,
+      );
+    }
   }
 
   void _endTrip() {
@@ -640,112 +812,54 @@ class _DashboardViewState extends State<DashboardView> {
     );
   }
 
-  void _showFilterSheet() {
-    var draftCategories = Set<MapLocationCategory>.from(_activeCategories);
-
-    showModalBottomSheet(
-      context: context,
-      showDragHandle: true,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Filtrar pontos no mapa',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Escolha quais categorias reais devem aparecer.',
-                      style: TextStyle(
-                        color: Color(0xFF64748B),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Flexible(
-                      child: ListView(
-                        shrinkWrap: true,
-                        children: _categoryOptions.map((option) {
-                          final count = _countByCategory(option.category);
-                          final enabled =
-                              draftCategories.contains(option.category);
-
-                          return CheckboxListTile(
-                            value: enabled,
-                            activeColor: option.color,
-                            contentPadding: EdgeInsets.zero,
-                            secondary: CircleAvatar(
-                              backgroundColor:
-                                  option.color.withValues(alpha: 0.14),
-                              child: Icon(option.icon, color: option.color),
-                            ),
-                            title: Text(option.label),
-                            subtitle: Text('$count locais confirmados'),
-                            onChanged: count == 0
-                                ? null
-                                : (value) {
-                                    setSheetState(() {
-                                      if (value == true) {
-                                        draftCategories.add(option.category);
-                                      } else {
-                                        draftCategories.remove(option.category);
-                                      }
-                                    });
-                                  },
-                          );
-                        }).toList(growable: false),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              setSheetState(() {
-                                draftCategories = {
-                                  for (final option in _categoryOptions)
-                                    if (_countByCategory(option.category) > 0)
-                                      option.category,
-                                };
-                              });
-                            },
-                            child: const Text('Selecionar tudo'),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              setState(() {
-                                _activeCategories = draftCategories;
-                              });
-
-                              Navigator.pop(context);
-                            },
-                            child: const Text('Aplicar filtros'),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
+  Future<void> _showFilterMenu(BuildContext anchorContext) async {
+    final overlay =
+        Overlay.of(anchorContext).context.findRenderObject() as RenderBox;
+    final button = anchorContext.findRenderObject() as RenderBox;
+    final topLeft = button.localToGlobal(Offset.zero, ancestor: overlay);
+    final bottomRight = button.localToGlobal(
+      button.size.bottomRight(Offset.zero),
+      ancestor: overlay,
     );
+
+    final selectedCategories = await showMenu<Set<MapLocationCategory>>(
+      context: context,
+      color: Colors.transparent,
+      elevation: 0,
+      position: RelativeRect.fromRect(
+        Rect.fromPoints(topLeft, bottomRight),
+        Offset.zero & overlay.size,
+      ),
+      items: [
+        PopupMenuItem<Set<MapLocationCategory>>(
+          enabled: false,
+          padding: EdgeInsets.zero,
+          child: _FilterPopover(
+            options: _filterOptions,
+            initiallySelectedCategories:
+                _allCategoriesSelected ? const {} : _activeCategories,
+            countByCategory: _countByCategory,
+            onClear: () {
+              Navigator.pop(context, <MapLocationCategory>{});
+            },
+            onApply: (temporaryCategories) {
+              Navigator.pop(
+                context,
+                temporaryCategories.length == _categoryOptions.length
+                    ? <MapLocationCategory>{}
+                    : Set<MapLocationCategory>.from(temporaryCategories),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+
+    if (selectedCategories == null || !mounted) return;
+
+    setState(() {
+      _activeCategories = selectedCategories;
+    });
   }
 
   int _countByCategory(MapLocationCategory category) {
@@ -761,53 +875,33 @@ class _DashboardViewState extends State<DashboardView> {
     return first.length == second.length && first.every(second.contains);
   }
 
-  bool _isQuickFilterSelected(_DashboardQuickFilter filter) {
-    if (filter.categories == null) {
-      return _allCategoriesSelected;
-    }
-
-    return _sameCategorySet(filter.categories!, _activeCategories);
-  }
-
-  void _applyQuickFilter(_DashboardQuickFilter filter) {
-    setState(() {
-      if (filter.categories == null) {
-        _activeCategories = {
-          for (final option in _categoryOptions) option.category,
-        };
-      } else {
-        _activeCategories = Set<MapLocationCategory>.from(filter.categories!);
-      }
-    });
-  }
-
   Color _routeColorFor(MapLocation location) {
     switch (location.category) {
       case MapLocationCategory.gasStation:
-        return const Color(0xFFC91508);
+        return _categoryGasColor;
       case MapLocationCategory.restaurant:
-        return const Color.fromARGB(255, 67, 184, 77);
+        return _categoryRestaurantColor;
       case MapLocationCategory.hotel:
-        return Colors.purple;
+        return _categoryHotelColor;
       case MapLocationCategory.hospital:
-        return Colors.redAccent;
+        return _categoryHospitalColor;
       case MapLocationCategory.market:
-        return const Color.fromARGB(255, 106, 67, 184);
+        return _categoryMarketColor;
       case MapLocationCategory.petShop:
-        return Colors.teal;
+        return _categoryPetColor;
       case MapLocationCategory.repairShop:
-        return const Color.fromARGB(255, 28, 25, 34);
+        return _categoryRepairColor;
       case MapLocationCategory.touristSpot:
       case MapLocationCategory.beach:
       case MapLocationCategory.naturalAttraction:
       case MapLocationCategory.historicSite:
-        return Colors.orange;
+        return _categoryTourismColor;
       case MapLocationCategory.pharmacy:
-        return Colors.green;
+        return _categoryPharmacyColor;
       case MapLocationCategory.riverPort:
-        return Colors.blue;
+        return _categoryRiverPortColor;
       case MapLocationCategory.busTerminal:
-        return const Color.fromARGB(255, 99, 64, 0);
+        return _categoryBusTerminalColor;
     }
   }
 
@@ -832,17 +926,19 @@ class _DashboardViewState extends State<DashboardView> {
         .replaceAll('ç', 'c');
   }
 
-  void _showMessage(String message) {
+  void _showMessage(
+    String message, {
+    String? subtitle,
+    ViageBemMessageType type = ViageBemMessageType.error,
+  }) {
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          behavior: SnackBarBehavior.floating,
-          content: Text(message),
-        ),
-      );
+    showViageBemMessage(
+      context,
+      title: message,
+      subtitle: subtitle,
+      type: type,
+    );
   }
 
   @override
@@ -856,6 +952,10 @@ class _DashboardViewState extends State<DashboardView> {
           children: [
             _buildMapa(),
             _buildFavorites(),
+            ConfiguracaoView(
+              showBackButton: false,
+              onProfileUpdated: _carregarNome,
+            ),
           ],
         ),
       ),
@@ -892,12 +992,13 @@ class _DashboardViewState extends State<DashboardView> {
             MarkerLayer(
               markers: [
                 ..._buildLocationMarkers(),
-                if (_currentPosition != null)
+                if (_displayedUserPosition != null || _currentPosition != null)
                   Marker(
-                    point: LatLng(
-                      _currentPosition!.latitude,
-                      _currentPosition!.longitude,
-                    ),
+                    point: _displayedUserPosition ??
+                        LatLng(
+                          _currentPosition!.latitude,
+                          _currentPosition!.longitude,
+                        ),
                     width: 46,
                     height: 46,
                     alignment: Alignment.center,
@@ -1100,108 +1201,8 @@ class _DashboardViewState extends State<DashboardView> {
       left: 16,
       right: 16,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Builder(
-                builder: (context) {
-                  return _HeaderIconButton(
-                    icon: Icons.menu_rounded,
-                    tooltip: 'Menu',
-                    selected: true,
-                    onTap: () => Scaffold.of(context).openDrawer(),
-                  );
-                },
-              ),
-              const SizedBox(width: 12),
-              Container(
-                width: 62,
-                height: 62,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      corPerfil.withValues(alpha: 0.82),
-                      corPerfil,
-                    ],
-                  ),
-                  border: Border.all(color: Colors.white, width: 4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: corPerfil.withValues(alpha: 0.30),
-                      blurRadius: 18,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  backgroundColor: Colors.transparent,
-                  backgroundImage: caminhoFoto != null
-                      ? FileImage(File(caminhoFoto!))
-                      : null,
-                  child: caminhoFoto == null
-                      ? const Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 34,
-                        )
-                      : null,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '$_saudacao, $_displayName',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF07112F),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.location_on,
-                          color: Color(0xFF4F46E5),
-                          size: 18,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            _locationSummary,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF4B4F86),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              _HeaderIconButton(
-                icon: Icons.tune_rounded,
-                tooltip: 'Filtros',
-                showIndicator: !_allCategoriesSelected,
-                onTap: _showFilterSheet,
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
           Material(
             color: Colors.white.withValues(alpha: 0.94),
             borderRadius: BorderRadius.circular(34),
@@ -1250,23 +1251,41 @@ class _DashboardViewState extends State<DashboardView> {
               ),
             ),
           ),
-          const SizedBox(height: 18),
-          SizedBox(
-            height: 56,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _quickFilters.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-                final filter = _quickFilters[index];
-
-                return _QuickFilterChip(
-                  filter: filter,
-                  selected: _isQuickFilterSelected(filter),
-                  onTap: () => _applyQuickFilter(filter),
-                );
-              },
+          const SizedBox(height: 12),
+          Center(
+            child: _LocationSummaryCard(
+              icon: _locationSummaryIcon,
+              color: _locationSummaryColor,
+              text: _locationSummary,
             ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Builder(
+                builder: (context) {
+                  return _HeaderIconButton(
+                    icon: Icons.menu_rounded,
+                    label: 'Menu',
+                    tooltip: 'Menu',
+                    selected: true,
+                    onTap: () => Scaffold.of(context).openDrawer(),
+                  );
+                },
+              ),
+              Builder(
+                builder: (context) {
+                  return _HeaderIconButton(
+                    icon: Icons.tune_rounded,
+                    label: 'Filtros',
+                    tooltip: 'Filtros',
+                    showIndicator: !_allCategoriesSelected,
+                    onTap: () => _showFilterMenu(context),
+                  );
+                },
+              ),
+            ],
           ),
         ],
       ),
@@ -1275,7 +1294,7 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildBottomNavigation() {
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(40, 0, 40, 18),
+      minimum: const EdgeInsets.fromLTRB(22, 0, 22, 18),
       child: Container(
         height: 86,
         padding: const EdgeInsets.all(8),
@@ -1313,6 +1332,19 @@ class _DashboardViewState extends State<DashboardView> {
                 onTap: () {
                   setState(() {
                     _selectedIndex = 1;
+                  });
+                },
+              ),
+            ),
+            Expanded(
+              child: _BottomNavItem(
+                icon: Icons.settings_outlined,
+                selectedIcon: Icons.settings_rounded,
+                label: 'Configuracoes',
+                selected: _selectedIndex == 2,
+                onTap: () {
+                  setState(() {
+                    _selectedIndex = 2;
                   });
                 },
               ),
@@ -1379,8 +1411,8 @@ class _DashboardViewState extends State<DashboardView> {
     return _filteredLocations.map((location) {
       return Marker(
         point: location.position,
-        width: 30,
-        height: 34,
+        width: 38,
+        height: 38,
         alignment: Alignment.topCenter,
         child: _MapLocationMarker(
           location: location,
@@ -1393,41 +1425,16 @@ class _DashboardViewState extends State<DashboardView> {
 
   Drawer _buildDrawer() {
     return Drawer(
+      backgroundColor: const Color(0xFFF8FAFF),
       child: ListView(
+        padding: EdgeInsets.zero,
         children: [
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: corPerfil),
-            accountName: Text(_displayName),
-            accountEmail: Text(emailUsuario),
-            currentAccountPicture: CircleAvatar(
-              backgroundImage:
-                  caminhoFoto != null ? FileImage(File(caminhoFoto!)) : null,
-              child: caminhoFoto == null
-                  ? const Icon(Icons.person, size: 40)
-                  : null,
-            ),
-          ),
-          _drawerItem(
-            Icons.settings,
-            'Configuracoes',
-            Colors.grey,
-            () async {
-              final resultado = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => const ConfiguracaoView(),
-                ),
-              );
-
-              if (resultado == true) {
-                _carregarNome();
-              }
-            },
-          ),
+          _buildDrawerHeader(),
           _drawerItem(
             Icons.calendar_today,
-            'Calendario',
-            Colors.blue,
+            'Calendário',
+            'Veja seus compromissos',
+            const Color(0xFF5B4CF2),
             () {
               Navigator.push(
                 context,
@@ -1437,14 +1444,40 @@ class _DashboardViewState extends State<DashboardView> {
               );
             },
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            child: Divider(thickness: 1),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 14),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.auto_awesome,
+                  color: Color(0xFF7C6DF2),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'EXPLORAR',
+                  style: TextStyle(
+                    color: Color(0xFF7C6DF2),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.1,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Container(
+                    height: 1,
+                    color: const Color(0xFFE5E7F4),
+                  ),
+                ),
+              ],
+            ),
           ),
           _drawerItem(
             Icons.local_gas_station,
             'Postos',
-            const Color.fromARGB(255, 201, 21, 8),
+            'Encontre postos de combustível',
+            _categoryGasColor,
             () {
               Navigator.push(
                 context,
@@ -1454,8 +1487,9 @@ class _DashboardViewState extends State<DashboardView> {
           ),
           _drawerItem(
             Icons.tour,
-            'Pontos Turisticos',
-            Colors.orange,
+            'Pontos Turísticos',
+            'Descubra lugares incríveis',
+            _categoryTourismColor,
             () {
               Navigator.push(
                 context,
@@ -1466,7 +1500,8 @@ class _DashboardViewState extends State<DashboardView> {
           _drawerItem(
             Icons.car_repair,
             'Oficinas',
-            const Color.fromARGB(255, 28, 25, 34),
+            'Oficinas e serviços automotivos',
+            _categoryRepairColor,
             () {
               Navigator.push(
                 context,
@@ -1477,7 +1512,8 @@ class _DashboardViewState extends State<DashboardView> {
           _drawerItem(
             Icons.local_grocery_store,
             'Mercados',
-            const Color.fromARGB(255, 106, 67, 184),
+            'Mercados e supermercados',
+            _categoryMarketColor,
             () {
               Navigator.push(
                 context,
@@ -1488,7 +1524,8 @@ class _DashboardViewState extends State<DashboardView> {
           _drawerItem(
             Icons.restaurant,
             'Restaurantes',
-            const Color.fromARGB(255, 67, 184, 77),
+            'Restaurantes e lanchonetes',
+            _categoryRestaurantColor,
             () {
               Navigator.push(
                 context,
@@ -1498,8 +1535,9 @@ class _DashboardViewState extends State<DashboardView> {
           ),
           _drawerItem(
             Icons.hotel,
-            'Hoteis',
-            Colors.purple,
+            'Hotéis',
+            'Hotéis e pousadas',
+            _categoryHotelColor,
             () {
               Navigator.push(
                 context,
@@ -1510,7 +1548,8 @@ class _DashboardViewState extends State<DashboardView> {
           _drawerItem(
             Icons.local_hospital,
             'Hospitais',
-            Colors.red,
+            'Hospitais e clínicas',
+            _categoryHospitalColor,
             () {
               Navigator.push(
                 context,
@@ -1519,9 +1558,22 @@ class _DashboardViewState extends State<DashboardView> {
             },
           ),
           _drawerItem(
+            Icons.local_pharmacy,
+            'Farmácias',
+            'Farmácias e drogarias',
+            _categoryPharmacyColor,
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PharmaciesScreen()),
+              );
+            },
+          ),
+          _drawerItem(
             Icons.pets,
             'Pets',
-            Colors.teal,
+            'Pet shops e clínicas veterinárias',
+            _categoryPetColor,
             () {
               Navigator.push(
                 context,
@@ -1530,9 +1582,22 @@ class _DashboardViewState extends State<DashboardView> {
             },
           ),
           _drawerItem(
+            Icons.directions_bus,
+            'Terminais Rodoviários',
+            'Viagens terrestres',
+            _categoryBusTerminalColor,
+            () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BusTerminalsScreen()),
+              );
+            },
+          ),
+          _drawerItem(
             Icons.directions_boat,
-            'Terminais Hidroviarios',
-            Colors.blue,
+            'Terminais Hidroviários',
+            'Viagens pelos rios',
+            _categoryRiverPortColor,
             () {
               Navigator.push(
                 context,
@@ -1542,16 +1607,115 @@ class _DashboardViewState extends State<DashboardView> {
               );
             },
           ),
-          _drawerItem(
-            Icons.directions_bus,
-            'Terminais Rodoviarios',
-            const Color.fromARGB(255, 99, 64, 0),
-            () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const BusTerminalsScreen()),
-              );
-            },
+          const SizedBox(height: 22),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerHeader() {
+    final hasPhoto = caminhoFoto != null &&
+        caminhoFoto!.trim().isNotEmpty &&
+        File(caminhoFoto!).existsSync();
+    final headerBaseColor = corPerfil;
+    final gradientStart = Color.lerp(headerBaseColor, Colors.black, 0.74)!;
+    final gradientMiddle = Color.lerp(headerBaseColor, Colors.black, 0.30)!;
+    final gradientEnd =
+        Color.lerp(headerBaseColor, const Color(0xFF2563EB), 0.34)!;
+
+    return Container(
+      height: 230,
+      padding: const EdgeInsets.fromLTRB(24, 44, 24, 24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            gradientStart,
+            gradientMiddle,
+            gradientEnd,
+          ],
+        ),
+        borderRadius: const BorderRadius.only(
+          bottomRight: Radius.circular(34),
+        ),
+      ),
+      child: Row(
+        children: [
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                width: 92,
+                height: 92,
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.18),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.55),
+                    width: 2,
+                  ),
+                ),
+                child: CircleAvatar(
+                  backgroundColor: headerBaseColor,
+                  backgroundImage:
+                      hasPhoto ? FileImage(File(caminhoFoto!)) : null,
+                  child: hasPhoto
+                      ? null
+                      : const Icon(
+                          Icons.person,
+                          color: Colors.white,
+                          size: 54,
+                        ),
+                ),
+              ),
+              Positioned(
+                right: 3,
+                bottom: 5,
+                child: Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4ADE80),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 18),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  emailUsuario.trim().isEmpty
+                      ? 'E-mail não informado'
+                      : emailUsuario.trim(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.68),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1561,28 +1725,82 @@ class _DashboardViewState extends State<DashboardView> {
   Widget _drawerItem(
     IconData icon,
     String title,
+    String subtitle,
     Color color,
     VoidCallback onTap,
   ) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
       child: Material(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(16),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: color,
-            child: Icon(icon, color: Colors.white),
-          ),
-          title: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          trailing: const Icon(Icons.chevron_right),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        elevation: 7,
+        shadowColor: const Color(0xFF1E1B4B).withValues(alpha: 0.10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
           onTap: () {
             Navigator.pop(context);
             onTap();
           },
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 13, 14, 13),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: color,
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.24),
+                        blurRadius: 12,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 27),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF14182F),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF626984),
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  color: color,
+                  size: 30,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -1608,39 +1826,42 @@ class _MapLocationMarker extends StatelessWidget {
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: SizedBox(
-          width: 30,
+          width: 34,
           height: 34,
           child: Stack(
-            alignment: Alignment.topCenter,
+            alignment: Alignment.center,
             children: [
-              Icon(
-                Icons.location_on,
-                color: location.color,
-                size: isFavorite ? 34 : 32,
-                shadows: [
-                  Shadow(
-                    color: Colors.black.withValues(alpha: 0.24),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+              Container(
+                width: isFavorite ? 34 : 30,
+                height: isFavorite ? 34 : 30,
+                decoration: BoxDecoration(
+                  color: location.color,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.24),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  location.icon,
+                  color: Colors.white,
+                  size: isFavorite ? 17 : 15,
+                ),
               ),
-              Positioned(
-                top: 5,
-                child: Container(
-                  width: 15,
-                  height: 15,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
+              if (isFavorite)
+                const Positioned(
+                  right: 0,
+                  top: 0,
                   child: Icon(
-                    location.icon,
-                    color: location.color,
+                    Icons.favorite,
+                    color: Colors.white,
                     size: 10,
                   ),
                 ),
-              ),
             ],
           ),
         ),
@@ -1740,6 +1961,92 @@ class _TripMetric extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _LocationSummaryCard extends StatelessWidget {
+  const _LocationSummaryCard({
+    required this.icon,
+    required this.color,
+    required this.text,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final separatorIndex = text.indexOf(' ');
+    final countText =
+        separatorIndex == -1 ? text : text.substring(0, separatorIndex);
+    final labelText =
+        separatorIndex == -1 ? '' : text.substring(separatorIndex + 1);
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 220),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.96, end: 1).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: Material(
+        key: ValueKey(text),
+        color: Colors.white.withValues(alpha: 0.96),
+        borderRadius: BorderRadius.circular(999),
+        elevation: 9,
+        shadowColor: const Color(0xFF4338CA).withValues(alpha: 0.14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                color: color,
+                size: 20,
+              ),
+              const SizedBox(width: 7),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 230),
+                child: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: countText,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      if (labelText.isNotEmpty)
+                        TextSpan(
+                          text: ' $labelText',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF252A5F),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -2065,11 +2372,13 @@ class _HeaderIconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
+    this.label,
     this.selected = false,
     this.showIndicator = false,
   });
 
   final IconData icon;
+  final String? label;
   final String tooltip;
   final VoidCallback onTap;
   final bool selected;
@@ -2086,15 +2395,31 @@ class _HeaderIconButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         onTap: onTap,
         child: SizedBox(
-          width: 58,
+          width: label == null ? 58 : 98,
           height: 58,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Icon(
-                icon,
-                color: const Color(0xFF373979),
-                size: 32,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    color: const Color(0xFF373979),
+                    size: 28,
+                  ),
+                  if (label != null) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      label!,
+                      style: const TextStyle(
+                        color: Color(0xFF252A5F),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ],
               ),
               if (selected)
                 const Positioned(
@@ -2133,73 +2458,239 @@ class _HeaderIconButton extends StatelessWidget {
   }
 }
 
-class _QuickFilterChip extends StatelessWidget {
-  const _QuickFilterChip({
-    required this.filter,
-    required this.selected,
-    required this.onTap,
+class _FilterPopover extends StatefulWidget {
+  const _FilterPopover({
+    required this.options,
+    required this.initiallySelectedCategories,
+    required this.countByCategory,
+    required this.onClear,
+    required this.onApply,
   });
 
-  final _DashboardQuickFilter filter;
-  final bool selected;
-  final VoidCallback onTap;
+  final List<_DashboardQuickFilter> options;
+  final Set<MapLocationCategory> initiallySelectedCategories;
+  final int Function(MapLocationCategory category) countByCategory;
+  final VoidCallback onClear;
+  final ValueChanged<Set<MapLocationCategory>> onApply;
+
+  @override
+  State<_FilterPopover> createState() => _FilterPopoverState();
+}
+
+class _FilterPopoverState extends State<_FilterPopover> {
+  late Set<MapLocationCategory> _temporaryCategories;
+
+  @override
+  void initState() {
+    super.initState();
+    _temporaryCategories = Set<MapLocationCategory>.from(
+      widget.initiallySelectedCategories,
+    );
+  }
+
+  void _toggleOption(_DashboardQuickFilter option, bool selected) {
+    setState(() {
+      final categories = option.categories;
+
+      if (categories == null) {
+        _temporaryCategories = {};
+        return;
+      }
+
+      if (selected) {
+        _temporaryCategories.addAll(categories);
+      } else {
+        _temporaryCategories.removeAll(categories);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final foreground =
-        selected ? const Color(0xFF2118E8) : const Color(0xFF07112F);
-
-    return Material(
-      color: Colors.white.withValues(alpha: selected ? 0.98 : 0.92),
-      borderRadius: BorderRadius.circular(22),
-      elevation: selected ? 8 : 4,
-      shadowColor:
-          const Color(0xFF4338CA).withValues(alpha: selected ? 0.16 : 0.08),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(
-              color: selected
-                  ? const Color(0xFF7C6CFF)
-                  : Colors.white.withValues(alpha: 0.70),
-              width: selected ? 1.6 : 1,
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          top: -7,
+          right: 24,
+          child: Transform.rotate(
+            angle: math.pi / 4,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.98),
+                borderRadius: BorderRadius.circular(4),
+              ),
             ),
-            gradient: selected
-                ? LinearGradient(
-                    colors: [
-                      const Color(0xFF7C6CFF).withValues(alpha: 0.14),
-                      Colors.white.withValues(alpha: 0.95),
-                    ],
-                  )
-                : null,
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                filter.icon,
-                color: selected ? const Color(0xFF2118E8) : filter.color,
-                size: 24,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                filter.label,
-                style: TextStyle(
-                  color: foreground,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
           ),
         ),
-      ),
+        Material(
+          color: Colors.white.withValues(alpha: 0.98),
+          borderRadius: BorderRadius.circular(22),
+          elevation: 18,
+          shadowColor: Colors.black.withValues(alpha: 0.18),
+          child: SizedBox(
+            width: 300,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Filtrar categorias',
+                    style: TextStyle(
+                      color: Color(0xFF07112F),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Escolha quais categorias exibir no mapa.',
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 360,
+                    child: ListView.separated(
+                      padding: EdgeInsets.zero,
+                      primary: false,
+                      itemCount: widget.options.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 1),
+                      itemBuilder: (context, index) {
+                        final option = widget.options[index];
+                        final selected = _isSelected(option);
+                        final count = _countFor(option);
+
+                        return InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: count == 0
+                              ? null
+                              : () => _toggleOption(option, !selected),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 2,
+                              vertical: 5,
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  option.icon,
+                                  color: option.color,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    option.label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Color(0xFF111827),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                                Checkbox(
+                                  value: selected,
+                                  activeColor: const Color(0xFF5A43FF),
+                                  visualDensity: VisualDensity.compact,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                  onChanged: count == 0
+                                      ? null
+                                      : (value) {
+                                          _toggleOption(
+                                            option,
+                                            value == true,
+                                          );
+                                        },
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: widget.onClear,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Limpar filtros'),
+                    style: TextButton.styleFrom(
+                      alignment: Alignment.centerLeft,
+                      foregroundColor: const Color(0xFF4F46E5),
+                      textStyle: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 44,
+                    child: ElevatedButton.icon(
+                      onPressed: () => widget.onApply(_temporaryCategories),
+                      icon: const Icon(Icons.check_rounded, size: 18),
+                      label: const Text('Aplicar filtros'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF5A43FF),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
+  }
+
+  int _countFor(_DashboardQuickFilter option) {
+    final categories = option.categories;
+
+    if (categories == null) {
+      return _categoryOptions.fold<int>(
+        0,
+        (total, option) => total + widget.countByCategory(option.category),
+      );
+    }
+
+    return categories.fold<int>(
+      0,
+      (total, category) => total + widget.countByCategory(category),
+    );
+  }
+
+  bool _isSelected(_DashboardQuickFilter option) {
+    final categories = option.categories;
+
+    if (categories == null) {
+      return _temporaryCategories.isEmpty;
+    }
+
+    return _temporaryCategories.isNotEmpty &&
+        categories.every(_temporaryCategories.contains);
   }
 }
 
@@ -2333,7 +2824,7 @@ class _DashboardQuickFilter {
   final Set<MapLocationCategory>? categories;
 }
 
-const List<_DashboardQuickFilter> _quickFilters = [
+const List<_DashboardQuickFilter> _filterOptions = [
   _DashboardQuickFilter(
     label: 'Todos',
     summaryLabel: 'locais',
@@ -2344,62 +2835,83 @@ const List<_DashboardQuickFilter> _quickFilters = [
     label: 'Postos',
     summaryLabel: 'postos',
     icon: Icons.local_gas_station,
-    color: Color(0xFFFF6A00),
+    color: _categoryGasColor,
     categories: {MapLocationCategory.gasStation},
   ),
   _DashboardQuickFilter(
     label: 'Restaurantes',
     summaryLabel: 'restaurantes',
     icon: Icons.restaurant,
-    color: Color(0xFF1677F2),
+    color: _categoryRestaurantColor,
     categories: {MapLocationCategory.restaurant},
   ),
   _DashboardQuickFilter(
     label: 'Hospitais',
     summaryLabel: 'hospitais',
     icon: Icons.local_hospital,
-    color: Color(0xFFE53935),
+    color: _categoryHospitalColor,
     categories: {MapLocationCategory.hospital},
   ),
   _DashboardQuickFilter(
     label: 'Hotéis',
     summaryLabel: 'hotéis',
     icon: Icons.hotel,
-    color: Color(0xFF9C27B0),
+    color: _categoryHotelColor,
     categories: {MapLocationCategory.hotel},
   ),
   _DashboardQuickFilter(
     label: 'Mercados',
     summaryLabel: 'mercados',
     icon: Icons.local_grocery_store,
-    color: Color(0xFF6A43B8),
+    color: _categoryMarketColor,
     categories: {MapLocationCategory.market},
   ),
   _DashboardQuickFilter(
     label: 'Pets',
     summaryLabel: 'pets',
     icon: Icons.pets,
-    color: Colors.teal,
+    color: _categoryPetColor,
     categories: {MapLocationCategory.petShop},
+  ),
+  _DashboardQuickFilter(
+    label: 'Farmacias',
+    summaryLabel: 'farmacias',
+    icon: Icons.local_pharmacy,
+    color: _categoryPharmacyColor,
+    categories: {MapLocationCategory.pharmacy},
   ),
   _DashboardQuickFilter(
     label: 'Oficinas',
     summaryLabel: 'oficinas',
     icon: Icons.car_repair,
-    color: Color(0xFF1C1922),
+    color: _categoryRepairColor,
     categories: {MapLocationCategory.repairShop},
   ),
   _DashboardQuickFilter(
-    label: 'Turismo',
+    label: 'Pontos Turisticos',
     summaryLabel: 'pontos turísticos',
     icon: Icons.tour,
-    color: Colors.orange,
+    color: _categoryTourismColor,
     categories: {
       MapLocationCategory.touristSpot,
       MapLocationCategory.beach,
       MapLocationCategory.naturalAttraction,
       MapLocationCategory.historicSite,
     },
+  ),
+  _DashboardQuickFilter(
+    label: 'Terminais Rodoviarios',
+    summaryLabel: 'terminais rodoviarios',
+    icon: Icons.directions_bus,
+    color: _categoryBusTerminalColor,
+    categories: {MapLocationCategory.busTerminal},
+  ),
+  _DashboardQuickFilter(
+    label: 'Terminais Hidroviarios',
+    summaryLabel: 'terminais hidroviarios',
+    icon: Icons.directions_boat,
+    color: _categoryRiverPortColor,
+    categories: {MapLocationCategory.riverPort},
   ),
 ];
 
@@ -2408,84 +2920,84 @@ const List<_DashboardCategory> _categoryOptions = [
     category: MapLocationCategory.gasStation,
     label: 'Postos',
     icon: Icons.local_gas_station,
-    color: Color(0xFFC91508),
+    color: _categoryGasColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.hospital,
     label: 'Hospitais',
     icon: Icons.local_hospital,
-    color: Colors.red,
+    color: _categoryHospitalColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.touristSpot,
     label: 'Pontos turisticos',
     icon: Icons.flag,
-    color: Colors.orange,
+    color: _categoryTourismColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.beach,
     label: 'Praias',
     icon: Icons.beach_access,
-    color: Colors.orange,
+    color: _categoryTourismColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.naturalAttraction,
     label: 'Atracoes naturais',
     icon: Icons.park,
-    color: Colors.orange,
+    color: _categoryTourismColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.historicSite,
     label: 'Locais historicos',
     icon: Icons.account_balance,
-    color: Colors.orange,
+    color: _categoryTourismColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.hotel,
     label: 'Hoteis',
     icon: Icons.hotel,
-    color: Colors.purple,
+    color: _categoryHotelColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.restaurant,
     label: 'Restaurantes',
     icon: Icons.restaurant,
-    color: Color.fromARGB(255, 67, 184, 77),
+    color: _categoryRestaurantColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.pharmacy,
     label: 'Farmacias',
     icon: Icons.local_pharmacy,
-    color: Colors.green,
+    color: _categoryPharmacyColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.petShop,
     label: 'Pets',
     icon: Icons.pets,
-    color: Colors.teal,
+    color: _categoryPetColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.repairShop,
     label: 'Oficinas',
     icon: Icons.car_repair,
-    color: Color.fromARGB(255, 28, 25, 34),
+    color: _categoryRepairColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.market,
     label: 'Mercados',
     icon: Icons.local_grocery_store,
-    color: Color.fromARGB(255, 106, 67, 184),
+    color: _categoryMarketColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.riverPort,
     label: 'Portos fluviais',
     icon: Icons.directions_boat,
-    color: Colors.blue,
+    color: _categoryRiverPortColor,
   ),
   _DashboardCategory(
     category: MapLocationCategory.busTerminal,
     label: 'Terminais rodoviarios',
     icon: Icons.directions_bus,
-    color: Color.fromARGB(255, 99, 64, 0),
+    color: _categoryBusTerminalColor,
   ),
 ];

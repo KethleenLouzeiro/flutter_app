@@ -13,7 +13,7 @@ class TouristSpotsScreen extends StatelessWidget {
       subtitle: 'Explore praias, historia e natureza do Para',
       emptyMessage: 'Nenhum ponto turistico confirmado encontrado.',
       icon: Icons.flag,
-      color: Colors.orange,
+      color: Color(0xFFFF8F00),
       categories: [
         MapLocationCategory.touristSpot,
         MapLocationCategory.beach,

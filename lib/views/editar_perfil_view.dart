@@ -1,8 +1,11 @@
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../widgets/viagebem_message.dart';
 
 class EditarPerfilView extends StatefulWidget {
   const EditarPerfilView({super.key});
@@ -43,10 +46,33 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
   @override
   void initState() {
     super.initState();
+    _carregarPerfil();
+  }
 
-    // Dados iniciais
-    _nomeController.text = ' ';
-    _emailController.text = ' ';
+  Future<void> _carregarPerfil() async {
+    final prefs = await SharedPreferences.getInstance();
+    final user = FirebaseAuth.instance.currentUser;
+    final nomeSalvo = prefs.getString('nome_usuario');
+    final fotoSalva = prefs.getString('foto_usuario');
+    final corSalva = prefs.getInt('cor_perfil');
+
+    if (!mounted) return;
+
+    setState(() {
+      _nomeController.text = nomeSalvo ?? user?.displayName ?? '';
+      _emailController.text = user?.email ?? '';
+      _caminhoImagem = fotoSalva;
+
+      if (fotoSalva != null &&
+          fotoSalva.trim().isNotEmpty &&
+          File(fotoSalva).existsSync()) {
+        _imagemPerfil = File(fotoSalva);
+      }
+
+      if (corSalva != null) {
+        corSelecionada = Color(corSalva);
+      }
+    });
   }
 
   @override
@@ -97,14 +123,14 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
               children: [
                 CircleAvatar(
                   radius: 55,
-                  backgroundColor: const Color(0xFFE8EAF6),
+                  backgroundColor: corSelecionada.withValues(alpha: 0.14),
                   backgroundImage:
                       _imagemPerfil != null ? FileImage(_imagemPerfil!) : null,
                   child: _imagemPerfil == null
-                      ? const Icon(
+                      ? Icon(
                           Icons.person,
                           size: 60,
-                          color: Colors.deepPurple,
+                          color: corSelecionada,
                         )
                       : null,
                 ),
@@ -180,16 +206,13 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
                     corSelecionada.toARGB32(),
                   );
 
-                  print('SALVOU: ${_nomeController.text}');
+                  if (!context.mounted) return;
 
-                  if (!mounted) return;
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Perfil atualizado com sucesso!',
-                      ),
-                    ),
+                  showViageBemMessage(
+                    context,
+                    title: 'Perfil atualizado com sucesso!',
+                    subtitle: 'Suas alterações foram salvas.',
+                    type: ViageBemMessageType.success,
                   );
 
                   Navigator.pop(context, true);
