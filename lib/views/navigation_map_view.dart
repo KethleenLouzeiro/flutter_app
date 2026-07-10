@@ -336,7 +336,7 @@ class _NavigationMapViewState extends State<NavigationMapView> {
             Positioned(
               left: 16,
               right: 16,
-              bottom: 24,
+              bottom: 0,
               child: SafeArea(
                 child: _NavigationTripPanel(
                   destination: widget.destination,
@@ -348,19 +348,24 @@ class _NavigationMapViewState extends State<NavigationMapView> {
             ),
           Positioned(
             right: 18,
-            bottom: _activeRoute == null ? 32 : 174,
+            bottom: _activeRoute == null ? 0 : 60,
             child: SafeArea(
               child: Material(
                 color: Colors.white.withValues(alpha: 0.96),
                 shape: const CircleBorder(),
                 elevation: 8,
-                child: IconButton(
-                  onPressed: _centerMapOnUser,
-                  icon: Icon(
-                    Icons.my_location,
-                    color: widget.routeColor,
+                child: SizedBox(
+                  width: 50,
+                  height: 50,
+                  child: IconButton(
+                    onPressed: _centerMapOnUser,
+                    icon: Icon(
+                      Icons.my_location,
+                      color: widget.routeColor,
+                      size: 27,
+                    ),
+                    tooltip: 'Minha localizacao',
                   ),
-                  tooltip: 'Minha localizacao',
                 ),
               ),
             ),
@@ -475,84 +480,75 @@ class _NavigationTripPanel extends StatelessWidget {
 
     return Material(
       color: Colors.white.withValues(alpha: 0.98),
-      borderRadius: BorderRadius.circular(26),
+      borderRadius: BorderRadius.circular(20),
       elevation: 14,
       shadowColor: Colors.black.withValues(alpha: 0.18),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        padding: const EdgeInsets.fromLTRB(12, 9, 10, 9),
+        child: Row(
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: color.withValues(alpha: 0.14),
-                  child: Icon(destination.icon, color: color),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Viagem em andamento',
-                        style: TextStyle(
-                          color: Color(0xFF64748B),
-                          fontWeight: FontWeight.w800,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        destination.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF111827),
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            CircleAvatar(
+              radius: 19,
+              backgroundColor: color.withValues(alpha: 0.14),
+              child: Icon(destination.icon, color: color, size: 20),
             ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: _TripMetric(
-                    label: 'Distancia',
-                    value: '${distanceKm.toStringAsFixed(1)} km',
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: _TripMetric(
-                    label: 'Tempo',
-                    value: '$durationMinutes min',
-                  ),
-                ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: onEndTrip,
-                  icon: const Icon(Icons.stop_circle_outlined, size: 18),
-                  label: const Text('Encerrar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: color,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Viagem em andamento',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 10,
                     ),
                   ),
+                  const SizedBox(height: 1),
+                  Text(
+                    destination.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF111827),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            _TripMetric(
+              label: '${distanceKm.toStringAsFixed(1)} km',
+              value: '$durationMinutes min',
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton.icon(
+              onPressed: onEndTrip,
+              icon: const Icon(Icons.stop_circle_outlined, size: 15),
+              label: const Text('Encerrar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: color,
+                foregroundColor: Colors.white,
+                textStyle: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
                 ),
-              ],
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 9,
+                ),
+                minimumSize: const Size(0, 38),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
             ),
           ],
         ),
@@ -572,33 +568,29 @@ class _TripMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
+    return SizedBox(
+      width: 52,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Color(0xFF64748B),
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 2),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Color(0xFF111827),
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
             ),
           ),

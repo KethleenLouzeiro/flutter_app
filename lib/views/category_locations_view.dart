@@ -7,6 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/para_locations.dart';
 import '../models/map_location.dart';
 import '../services/route_service.dart';
+import '../services/user_local_keys.dart';
 import '../widgets/viagebem_message.dart';
 import 'navigation_map_view.dart';
 
@@ -36,7 +37,6 @@ class CategoryLocationsView extends StatefulWidget {
 
 class _CategoryLocationsViewState extends State<CategoryLocationsView> {
   static const LatLng _defaultCenter = LatLng(-1.4558, -48.4902);
-  static const String _favoritesKey = 'viagebem_favorite_locations';
 
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
@@ -135,8 +135,20 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
   }
 
   Future<void> _loadFavorites() async {
+    final uid = UserLocalKeys.currentUid;
+
+    if (uid == null) {
+      if (!mounted) return;
+
+      setState(() {
+        _favoriteKeys = {};
+      });
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getStringList(_favoritesKey) ?? <String>[];
+    final saved =
+        prefs.getStringList(UserLocalKeys.favoritos(uid)) ?? <String>[];
 
     if (!mounted) return;
 
@@ -329,6 +341,13 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
 
   Future<void> _toggleFavorite(MapLocation location) async {
     Navigator.pop(context);
+    final uid = UserLocalKeys.currentUid;
+
+    if (uid == null) {
+      _showMessage('Entre novamente para salvar favoritos.');
+      return;
+    }
+
     final key = _locationKey(location);
     final updated = Set<String>.from(_favoriteKeys);
     final added = updated.add(key);
@@ -338,7 +357,10 @@ class _CategoryLocationsViewState extends State<CategoryLocationsView> {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_favoritesKey, updated.toList()..sort());
+    await prefs.setStringList(
+      UserLocalKeys.favoritos(uid),
+      updated.toList()..sort(),
+    );
 
     if (!mounted) return;
 
@@ -743,7 +765,7 @@ class _CategoryMap extends StatelessWidget {
             ),
             Positioned(
               right: 12,
-              top: 14,
+              bottom: activeRoute == null || routeDestination == null ? 44 : 50,
               child: _FloatingMapButton(
                 icon: Icons.my_location,
                 onTap: onFocusTap,
@@ -752,7 +774,7 @@ class _CategoryMap extends StatelessWidget {
             Positioned(
               left: 12,
               right: 12,
-              bottom: 12,
+              bottom: 0,
               child: activeRoute == null || routeDestination == null
                   ? _CategoryMapBanner(
                       icon: icon,
@@ -787,10 +809,7 @@ class _CategoryMapBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 10,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(14),
@@ -803,7 +822,7 @@ class _CategoryMapBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 19),
+          Icon(icon, color: color, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -813,7 +832,7 @@ class _CategoryMapBanner extends StatelessWidget {
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
                 color: Color(0xFF1F2937),
-                fontSize: 13,
+                fontSize: 12,
               ),
             ),
           ),
@@ -842,7 +861,7 @@ class _CategoryRouteBanner extends StatelessWidget {
     final durationMinutes = (route.durationSeconds / 60).round();
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 6, 8),
+      padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(14),
@@ -855,8 +874,8 @@ class _CategoryRouteBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(destination.icon, color: color, size: 20),
-          const SizedBox(width: 8),
+          Icon(destination.icon, color: color, size: 18),
+          const SizedBox(width: 7),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -869,7 +888,7 @@ class _CategoryRouteBanner extends StatelessWidget {
                   style: const TextStyle(
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF1F2937),
-                    fontSize: 13,
+                    fontSize: 12,
                   ),
                 ),
                 Text(
@@ -877,7 +896,7 @@ class _CategoryRouteBanner extends StatelessWidget {
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF64748B),
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
               ],
@@ -885,7 +904,7 @@ class _CategoryRouteBanner extends StatelessWidget {
           ),
           IconButton(
             onPressed: onClearRoute,
-            icon: const Icon(Icons.close, size: 18),
+            icon: const Icon(Icons.close, size: 17),
             tooltip: 'Cancelar rota',
             visualDensity: VisualDensity.compact,
           ),
@@ -1064,9 +1083,9 @@ class _FloatingMapButton extends StatelessWidget {
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: SizedBox(
-          width: 42,
-          height: 42,
-          child: Icon(icon),
+          width: 38,
+          height: 38,
+          child: Icon(icon, size: 21),
         ),
       ),
     );

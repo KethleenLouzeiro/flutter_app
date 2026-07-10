@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../services/user_local_keys.dart';
+
 class ViageBemTutorial {
-  static const String preferenceKey = 'viagebem_tutorial_seen';
+  static String? get currentPreferenceKey {
+    final uid = UserLocalKeys.currentUid;
+    return uid == null ? null : UserLocalKeys.tutorialVisto(uid);
+  }
 
   static Future<void> showIfNeeded(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
-    final alreadySeen = prefs.getBool(preferenceKey) ?? false;
+    final key = currentPreferenceKey;
+    final alreadySeen = key != null && (prefs.getBool(key) ?? false);
 
     if (alreadySeen || !context.mounted) return;
 
@@ -22,8 +28,12 @@ class ViageBemTutorial {
   }
 
   static Future<void> markAsSeen() async {
+    final key = currentPreferenceKey;
+
+    if (key == null) return;
+
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(preferenceKey, true);
+    await prefs.setBool(key, true);
   }
 }
 

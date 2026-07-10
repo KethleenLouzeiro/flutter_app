@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/auth_service.dart';
+import '../services/user_local_keys.dart';
 import 'dashboard_view.dart';
 
 class CadastroView extends StatefulWidget {
@@ -28,24 +30,15 @@ class _CadastroViewState extends State<CadastroView> {
   bool _aceitouTermos = false;
 
   Future<void> _cadastrar() async {
-
     if (!_formKey.currentState!.validate()) {
-
       if (_nomeController.text.isEmpty) {
-        FocusScope.of(context)
-            .requestFocus(_nomeFocus);
-
+        FocusScope.of(context).requestFocus(_nomeFocus);
       } else if (_emailController.text.isEmpty) {
-        FocusScope.of(context)
-            .requestFocus(_emailFocus);
-
+        FocusScope.of(context).requestFocus(_emailFocus);
       } else if (_senhaController.text.length < 6) {
-        FocusScope.of(context)
-            .requestFocus(_senhaFocus);
-
+        FocusScope.of(context).requestFocus(_senhaFocus);
       } else if (_confirmarSenhaController.text.isEmpty) {
-        FocusScope.of(context)
-            .requestFocus(_confirmarFocus);
+        FocusScope.of(context).requestFocus(_confirmarFocus);
       }
 
       return;
@@ -64,9 +57,7 @@ class _CadastroViewState extends State<CadastroView> {
     }
 
     /// 🔥 SENHAS DIFERENTES
-    if (_senhaController.text !=
-        _confirmarSenhaController.text) {
-
+    if (_senhaController.text != _confirmarSenhaController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
@@ -81,10 +72,8 @@ class _CadastroViewState extends State<CadastroView> {
     setState(() => _isLoading = true);
 
     try {
-
       UserCredential userCredential =
-          await FirebaseAuth.instance
-              .createUserWithEmailAndPassword(
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _senhaController.text.trim(),
       );
@@ -92,6 +81,18 @@ class _CadastroViewState extends State<CadastroView> {
       await userCredential.user!.updateDisplayName(
         _nomeController.text.trim(),
       );
+
+      final uid = userCredential.user?.uid;
+
+      if (uid != null) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+          UserLocalKeys.nomeUsuario(uid),
+          _nomeController.text.trim(),
+        );
+      }
+
+      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -102,24 +103,24 @@ class _CadastroViewState extends State<CadastroView> {
       );
 
       Navigator.pop(context);
-
     } on FirebaseAuthException catch (e) {
-
       String erro = 'Erro ao cadastrar';
 
       if (e.code == 'email-already-in-use') {
         erro = 'Email já está em uso';
-
       } else if (e.code == 'weak-password') {
         erro = 'Senha muito fraca';
       }
 
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(erro)),
       );
-
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -127,20 +128,16 @@ class _CadastroViewState extends State<CadastroView> {
   InputDecoration _decoracaoCampo(String texto) {
     return InputDecoration(
       hintText: texto,
-
       filled: true,
-      fillColor: Colors.white.withOpacity(0.92),
-
+      fillColor: Colors.white.withValues(alpha: 0.92),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: BorderSide.none,
       ),
-
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: BorderSide.none,
       ),
-
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: const BorderSide(
@@ -148,7 +145,6 @@ class _CadastroViewState extends State<CadastroView> {
           width: 2,
         ),
       ),
-
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: const BorderSide(
@@ -156,7 +152,6 @@ class _CadastroViewState extends State<CadastroView> {
           width: 1.5,
         ),
       ),
-
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
         borderSide: const BorderSide(
@@ -164,15 +159,12 @@ class _CadastroViewState extends State<CadastroView> {
           width: 2,
         ),
       ),
-
       errorStyle: const TextStyle(
         color: Color.fromARGB(255, 252, 0, 0),
         fontSize: 12,
         fontWeight: FontWeight.w500,
       ),
-
-      contentPadding:
-          const EdgeInsets.symmetric(
+      contentPadding: const EdgeInsets.symmetric(
         horizontal: 20,
         vertical: 18,
       ),
@@ -198,10 +190,8 @@ class _CadastroViewState extends State<CadastroView> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: true,
-
       body: Stack(
         children: [
-
           /// 🔥 FUNDO
           Positioned.fill(
             child: Image.asset(
@@ -212,42 +202,34 @@ class _CadastroViewState extends State<CadastroView> {
 
           /// 🔥 OVERLAY
           Container(
-            color: Colors.black.withOpacity(0.35),
+            color: Colors.black.withValues(alpha: 0.35),
           ),
 
           SafeArea(
             child: Form(
               key: _formKey,
-
               child: SingleChildScrollView(
                 child: Padding(
                   padding: EdgeInsets.only(
                     left: 24,
                     right: 24,
                     top: 12,
-                    bottom: MediaQuery.of(context)
-                        .viewInsets
-                        .bottom,
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
                   ),
-
                   child: Column(
                     children: [
-
                       /// 🔙 VOLTAR
                       Row(
                         children: [
-
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.25),
+                              color: Colors.black.withValues(alpha: 0.25),
                               shape: BoxShape.circle,
                             ),
-
                             child: IconButton(
                               onPressed: () {
                                 Navigator.pop(context);
                               },
-
                               icon: const Icon(
                                 Icons.arrow_back_ios_new,
                                 color: Colors.white,
@@ -284,21 +266,14 @@ class _CadastroViewState extends State<CadastroView> {
                       TextFormField(
                         controller: _nomeController,
                         focusNode: _nomeFocus,
-
-                        autovalidateMode:
-                            AutovalidateMode.onUserInteraction,
-
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         cursorColor: Colors.red,
-
                         style: const TextStyle(
                           color: Colors.black,
                         ),
-
-                        decoration:
-                            _decoracaoCampo(
+                        decoration: _decoracaoCampo(
                           'Nome de usuário',
                         ),
-
                         validator: (v) {
                           if (v == null || v.isEmpty) {
                             return 'Digite seu nome';
@@ -314,23 +289,15 @@ class _CadastroViewState extends State<CadastroView> {
                       TextFormField(
                         controller: _emailController,
                         focusNode: _emailFocus,
-
-                        autovalidateMode:
-                            AutovalidateMode.onUserInteraction,
-
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         cursorColor: Colors.red,
-
                         style: const TextStyle(
                           color: Colors.black,
                         ),
-
-                        decoration:
-                            _decoracaoCampo(
+                        decoration: _decoracaoCampo(
                           'Digite seu e-mail',
                         ),
-
                         validator: (v) {
-
                           if (v == null || v.isEmpty) {
                             return 'Digite seu email';
                           }
@@ -349,25 +316,16 @@ class _CadastroViewState extends State<CadastroView> {
                       TextFormField(
                         controller: _senhaController,
                         obscureText: true,
-
                         focusNode: _senhaFocus,
-
-                        autovalidateMode:
-                            AutovalidateMode.onUserInteraction,
-
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         cursorColor: Colors.red,
-
                         style: const TextStyle(
                           color: Colors.black,
                         ),
-
-                        decoration:
-                            _decoracaoCampo(
+                        decoration: _decoracaoCampo(
                           'Senha',
                         ),
-
                         validator: (v) {
-
                           if (v == null || v.isEmpty) {
                             return 'Digite sua senha';
                           }
@@ -384,29 +342,18 @@ class _CadastroViewState extends State<CadastroView> {
 
                       /// 🔥 CONFIRMAR SENHA
                       TextFormField(
-                        controller:
-                            _confirmarSenhaController,
-
+                        controller: _confirmarSenhaController,
                         obscureText: true,
-
                         focusNode: _confirmarFocus,
-
-                        autovalidateMode:
-                            AutovalidateMode.onUserInteraction,
-
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         cursorColor: Colors.red,
-
                         style: const TextStyle(
                           color: Colors.black,
                         ),
-
-                        decoration:
-                            _decoracaoCampo(
+                        decoration: _decoracaoCampo(
                           'Confirmar senha',
                         ),
-
                         validator: (v) {
-
                           if (v == null || v.isEmpty) {
                             return 'Confirme sua senha';
                           }
@@ -433,41 +380,31 @@ class _CadastroViewState extends State<CadastroView> {
                       /// 🔥 CHECKBOX
                       Row(
                         children: [
-
                           Checkbox(
                             value: _aceitouTermos,
-
                             onChanged: (value) {
                               setState(() {
-                                _aceitouTermos =
-                                    value!;
+                                _aceitouTermos = value!;
                               });
                             },
-
                             side: const BorderSide(
                               color: Colors.white,
                               width: 2,
                             ),
-
-                            shape:
-                                RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
                                 4,
                               ),
                             ),
-
                             activeColor: Colors.white,
                             checkColor: Colors.black,
                           ),
-
                           const Expanded(
                             child: Text(
                               'Aceitar termos de privacidade!',
                               style: TextStyle(
                                 color: Colors.white,
-                                fontWeight:
-                                    FontWeight.bold,
+                                fontWeight: FontWeight.bold,
                                 fontSize: 13,
                               ),
                             ),
@@ -481,75 +418,48 @@ class _CadastroViewState extends State<CadastroView> {
                       SizedBox(
                         width: double.infinity,
                         height: 55,
-
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            borderRadius:
-                                BorderRadius.circular(
+                            borderRadius: BorderRadius.circular(
                               30,
                             ),
-
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.blue
-                                    .withOpacity(
-                                  0.35,
-                                ),
-
+                                color: Colors.blue.withValues(alpha: 0.35),
                                 blurRadius: 14,
-
-                                offset:
-                                    const Offset(
+                                offset: const Offset(
                                   0,
                                   6,
                                 ),
                               ),
                             ],
-
-                            gradient:
-                                const LinearGradient(
+                            gradient: const LinearGradient(
                               colors: [
                                 Color(0xFF2D9CFF),
                                 Color(0xFF5B6DFF),
                               ],
                             ),
                           ),
-
                           child: ElevatedButton(
-                            onPressed: _isLoading
-                                ? null
-                                : _cadastrar,
-
-                            style:
-                                ElevatedButton.styleFrom(
-                              backgroundColor:
-                                  Colors.transparent,
-
-                              shadowColor:
-                                  Colors.transparent,
-
-                              shape:
-                                  RoundedRectangleBorder(
-                                borderRadius:
-                                    BorderRadius.circular(
+                            onPressed: _isLoading ? null : _cadastrar,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
                                   30,
                                 ),
                               ),
                             ),
-
                             child: _isLoading
                                 ? const CircularProgressIndicator(
-                                    color:
-                                        Colors.white,
+                                    color: Colors.white,
                                   )
                                 : const Text(
                                     'CRIAR',
-                                    style:
-                                        TextStyle(
-                                      color:
-                                          Colors.white,
-                                      fontWeight:
-                                          FontWeight.bold,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
                                       fontSize: 18,
                                     ),
                                   ),
@@ -563,8 +473,7 @@ class _CadastroViewState extends State<CadastroView> {
                         'OU',
                         style: TextStyle(
                           color: Colors.white,
-                          fontWeight:
-                              FontWeight.bold,
+                          fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                       ),
@@ -575,32 +484,25 @@ class _CadastroViewState extends State<CadastroView> {
                       SizedBox(
                         width: double.infinity,
                         height: 55,
-
                         child: OutlinedButton(
                           onPressed: () async {
-
                             setState(() => _isLoading = true);
 
                             try {
-
                               final user =
-                                  await AuthService()
-                                      .signInWithGoogle();
+                                  await AuthService().signInWithGoogle();
 
-                              if (user != null && mounted) {
+                              if (!context.mounted) return;
 
+                              if (user != null) {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        const DashboardView(),
+                                    builder: (_) => const DashboardView(),
                                   ),
                                 );
-
                               } else {
-
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(
+                                ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
                                       'Cadastro cancelado',
@@ -608,11 +510,10 @@ class _CadastroViewState extends State<CadastroView> {
                                   ),
                                 );
                               }
-
                             } catch (e) {
+                              if (!context.mounted) return;
 
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(
+                              ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
                                   content: Text(
                                     'Erro: $e',
@@ -621,47 +522,34 @@ class _CadastroViewState extends State<CadastroView> {
                               );
                             }
 
-                            setState(() => _isLoading = false);
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                            }
                           },
-
-                          style:
-                              OutlinedButton.styleFrom(
-                            backgroundColor:
-                                Colors.white,
-
-                            shape:
-                                RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
                                 30,
                               ),
                             ),
-
                             side: BorderSide.none,
                           ),
-
                           child: Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.center,
-
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-
                               Image.asset(
                                 'assets/images/google.png',
                                 width: 32,
                               ),
-
                               const SizedBox(
                                 width: 10,
                               ),
-
                               const Text(
                                 'Entrar com Google',
                                 style: TextStyle(
-                                  color:
-                                      Colors.black,
-                                  fontWeight:
-                                      FontWeight.bold,
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.bold,
                                   fontSize: 17,
                                 ),
                               ),

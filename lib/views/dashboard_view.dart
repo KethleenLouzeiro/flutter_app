@@ -10,6 +10,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:flutter_app/services/route_service.dart';
+import 'package:flutter_app/services/user_local_keys.dart';
 import 'package:flutter_app/views/calendario_view.dart';
 import 'package:flutter_app/views/configuracao_view.dart';
 import 'package:flutter_app/views/farmacias_view.dart';
@@ -50,7 +51,11 @@ class DashboardView extends StatefulWidget {
 
 class _DashboardViewState extends State<DashboardView> {
   static const LatLng _paraCenter = LatLng(-3.7000, -52.0000);
-  static const String _favoritesKey = 'viagebem_favorite_locations';
+  static const double _bottomNavHeight = 82;
+  static const double _bottomNavBottomMargin = -12;
+  static const double _overlayGap = 0;
+  static const double _routePanelEstimatedHeight = 62;
+  static const double _tripPanelEstimatedHeight = 66;
 
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
@@ -118,81 +123,6 @@ class _DashboardViewState extends State<DashboardView> {
             ));
   }
 
-  String get _locationSummary {
-    final count = _filteredLocations.length;
-
-    if (_query.trim().isNotEmpty) {
-      return '$count resultados encontrados';
-    }
-
-    if (_allCategoriesSelected) {
-      return '$count locais encontrados';
-    }
-
-    _DashboardQuickFilter? selectedFilter;
-
-    for (final filter in _filterOptions) {
-      if (filter.categories == null) {
-        continue;
-      }
-
-      if (_sameCategorySet(filter.categories!, _activeCategories)) {
-        selectedFilter = filter;
-        break;
-      }
-    }
-
-    if (selectedFilter != null) {
-      return '$count ${selectedFilter.summaryLabel} encontrados';
-    }
-
-    return '$count locais encontrados';
-  }
-
-  IconData get _locationSummaryIcon {
-    if (_query.trim().isNotEmpty) {
-      return Icons.search_rounded;
-    }
-
-    if (_allCategoriesSelected) {
-      return Icons.location_on_rounded;
-    }
-
-    for (final filter in _filterOptions) {
-      if (filter.categories == null) {
-        continue;
-      }
-
-      if (_sameCategorySet(filter.categories!, _activeCategories)) {
-        return filter.icon;
-      }
-    }
-
-    return Icons.location_on_rounded;
-  }
-
-  Color get _locationSummaryColor {
-    if (_query.trim().isNotEmpty) {
-      return const Color(0xFF4F46E5);
-    }
-
-    if (_allCategoriesSelected) {
-      return const Color(0xFF4F46E5);
-    }
-
-    for (final filter in _filterOptions) {
-      if (filter.categories == null) {
-        continue;
-      }
-
-      if (_sameCategorySet(filter.categories!, _activeCategories)) {
-        return filter.color;
-      }
-    }
-
-    return const Color(0xFF4F46E5);
-  }
-
   String get _displayName {
     if (nomeUsuario.trim().isNotEmpty) {
       return nomeUsuario.trim();
@@ -230,30 +160,45 @@ class _DashboardViewState extends State<DashboardView> {
   Future<void> _carregarNome() async {
     final prefs = await SharedPreferences.getInstance();
     final user = FirebaseAuth.instance.currentUser;
+    final uid = user?.uid;
+    final savedName =
+        uid == null ? null : prefs.getString(UserLocalKeys.nomeUsuario(uid));
+    final savedPhoto =
+        uid == null ? null : prefs.getString(UserLocalKeys.fotoUsuario(uid));
+    final savedColor =
+        uid == null ? null : prefs.getInt(UserLocalKeys.corPerfil(uid));
 
     if (!mounted) return;
 
     setState(() {
       emailUsuario = user?.email ?? '';
-      nomeUsuario = prefs.getString('nome_usuario') ?? user?.displayName ?? '';
+      nomeUsuario = savedName ?? emailUsuario;
 
       if (nomeUsuario.isEmpty) {
         nomeUsuario = emailUsuario;
       }
 
-      caminhoFoto = prefs.getString('foto_usuario');
+      caminhoFoto = savedPhoto;
 
-      final corSalva = prefs.getInt('cor_perfil');
-
-      if (corSalva != null) {
-        corPerfil = Color(corSalva);
-      }
+      corPerfil = savedColor == null ? Colors.deepPurple : Color(savedColor);
     });
   }
 
   Future<void> _loadFavorites() async {
+    final uid = UserLocalKeys.currentUid;
+
+    if (uid == null) {
+      if (!mounted) return;
+
+      setState(() {
+        _favoriteKeys = {};
+      });
+      return;
+    }
+
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getStringList(_favoritesKey) ?? <String>[];
+    final saved =
+        prefs.getStringList(UserLocalKeys.favoritos(uid)) ?? <String>[];
 
     if (!mounted) return;
 
@@ -263,6 +208,13 @@ class _DashboardViewState extends State<DashboardView> {
   }
 
   Future<void> _toggleFavorite(MapLocation location) async {
+    final uid = UserLocalKeys.currentUid;
+
+    if (uid == null) {
+      _showMessage('Entre novamente para salvar favoritos.');
+      return;
+    }
+
     final key = _locationKey(location);
     final updated = Set<String>.from(_favoriteKeys);
     final added = updated.add(key);
@@ -272,7 +224,10 @@ class _DashboardViewState extends State<DashboardView> {
     }
 
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_favoritesKey, updated.toList()..sort());
+    await prefs.setStringList(
+      UserLocalKeys.favoritos(uid),
+      updated.toList()..sort(),
+    );
 
     if (!mounted) return;
 
@@ -868,13 +823,6 @@ class _DashboardViewState extends State<DashboardView> {
         .length;
   }
 
-  bool _sameCategorySet(
-    Set<MapLocationCategory> first,
-    Set<MapLocationCategory> second,
-  ) {
-    return first.length == second.length && first.every(second.contains);
-  }
-
   Color _routeColorFor(MapLocation location) {
     switch (location.category) {
       case MapLocationCategory.gasStation:
@@ -939,6 +887,25 @@ class _DashboardViewState extends State<DashboardView> {
       subtitle: subtitle,
       type: type,
     );
+  }
+
+  double _panelBottomOffset(BuildContext context) {
+    final safeBottom = MediaQuery.paddingOf(context).bottom;
+    return _bottomNavHeight + _bottomNavBottomMargin + safeBottom + _overlayGap;
+  }
+
+  double _locationButtonBottomOffset(BuildContext context) {
+    final panelBottom = _panelBottomOffset(context);
+
+    if (_activeRoute == null || _routeDestination == null) {
+      return panelBottom;
+    }
+
+    final panelHeight = _navigationActive
+        ? _tripPanelEstimatedHeight
+        : _routePanelEstimatedHeight;
+
+    return panelBottom + panelHeight + _overlayGap;
   }
 
   @override
@@ -1018,7 +985,7 @@ class _DashboardViewState extends State<DashboardView> {
             child: CircularProgressIndicator(),
           ),
         Positioned(
-          bottom: _navigationActive ? 270 : 116,
+          bottom: _locationButtonBottomOffset(context),
           right: 18,
           child: _MapActionButton(
             icon: Icons.my_location,
@@ -1039,26 +1006,28 @@ class _DashboardViewState extends State<DashboardView> {
     return Positioned(
       left: 18,
       right: 18,
-      bottom: 188,
+      bottom: _panelBottomOffset(context),
       child: Material(
         color: Colors.white.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(18),
         elevation: 10,
         shadowColor: Colors.black.withValues(alpha: 0.14),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
+          padding: const EdgeInsets.fromLTRB(14, 9, 8, 9),
           child: Row(
             children: [
               CircleAvatar(
+                radius: 18,
                 backgroundColor: _routeColorFor(destination).withValues(
                   alpha: 0.14,
                 ),
                 child: Icon(
                   destination.icon,
                   color: _routeColorFor(destination),
+                  size: 19,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1071,14 +1040,16 @@ class _DashboardViewState extends State<DashboardView> {
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         color: Color(0xFF111827),
+                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 1),
                     Text(
                       '${distanceKm.toStringAsFixed(1)} km • $durationMinutes min',
                       style: const TextStyle(
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w700,
+                        fontSize: 12,
                       ),
                     ),
                   ],
@@ -1088,6 +1059,7 @@ class _DashboardViewState extends State<DashboardView> {
                 onPressed: _clearRoute,
                 tooltip: 'Cancelar rota',
                 icon: const Icon(Icons.close),
+                visualDensity: VisualDensity.compact,
               ),
             ],
           ),
@@ -1106,87 +1078,78 @@ class _DashboardViewState extends State<DashboardView> {
     return Positioned(
       left: 18,
       right: 18,
-      bottom: 104,
+      bottom: _panelBottomOffset(context),
       child: Material(
         color: Colors.white.withValues(alpha: 0.98),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(20),
         elevation: 14,
         shadowColor: Colors.black.withValues(alpha: 0.18),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          padding: const EdgeInsets.fromLTRB(12, 9, 10, 9),
+          child: Row(
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: routeColor.withValues(alpha: 0.14),
-                    child: Icon(destination.icon, color: routeColor),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Viagem em andamento',
-                          style: TextStyle(
-                            color: Color(0xFF64748B),
-                            fontWeight: FontWeight.w800,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          destination.name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF111827),
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+              CircleAvatar(
+                radius: 19,
+                backgroundColor: routeColor.withValues(alpha: 0.14),
+                child: Icon(destination.icon, color: routeColor, size: 20),
               ),
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: _TripMetric(
-                      label: 'Distancia',
-                      value: '${distanceKm.toStringAsFixed(1)} km',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _TripMetric(
-                      label: 'Tempo',
-                      value: '$durationMinutes min',
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  ElevatedButton.icon(
-                    onPressed: _endTrip,
-                    icon: const Icon(Icons.stop_circle_outlined, size: 18),
-                    label: const Text('Encerrar'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: routeColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Viagem em andamento',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w800,
+                        fontSize: 10,
                       ),
                     ),
+                    const SizedBox(height: 1),
+                    Text(
+                      destination.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF111827),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              _TripMetric(
+                label: '${distanceKm.toStringAsFixed(1)} km',
+                value: '$durationMinutes min',
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: _endTrip,
+                icon: const Icon(Icons.stop_circle_outlined, size: 15),
+                label: const Text('Encerrar'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: routeColor,
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
                   ),
-                ],
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 9,
+                  ),
+                  minimumSize: const Size(0, 38),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                ),
               ),
             ],
           ),
@@ -1200,92 +1163,83 @@ class _DashboardViewState extends State<DashboardView> {
       top: 16,
       left: 16,
       right: 16,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Material(
-            color: Colors.white.withValues(alpha: 0.94),
-            borderRadius: BorderRadius.circular(34),
-            elevation: 12,
-            shadowColor: const Color(0xFF4F46E5).withValues(alpha: 0.16),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (value) {
-                setState(() {
-                  _query = value;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: 'Pesquisar lugares no Pará...',
-                hintStyle: const TextStyle(
-                  color: Color(0xFF7371A8),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 18,
-                ),
-                prefixIcon: const Icon(
-                  Icons.search_rounded,
-                  color: Color(0xFF373979),
-                  size: 30,
-                ),
-                suffixIcon: _query.isEmpty
-                    ? const Icon(
-                        Icons.mic_none_rounded,
-                        color: Color(0xFF5D5EA8),
-                        size: 28,
-                      )
-                    : IconButton(
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _query = '';
-                          });
-                        },
-                        icon: const Icon(Icons.close),
-                        tooltip: 'Limpar pesquisa',
-                      ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 21,
+          Expanded(
+            child: Material(
+              color: Colors.white.withValues(alpha: 0.94),
+              borderRadius: BorderRadius.circular(30),
+              elevation: 12,
+              shadowColor: corPerfil.withValues(alpha: 0.38),
+              child: SizedBox(
+                height: 48,
+                child: TextField(
+                  controller: _searchController,
+                  textAlignVertical: TextAlignVertical.center,
+                  onChanged: (value) {
+                    setState(() {
+                      _query = value;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    isDense: true,
+                    hintText: 'Pesquisar...',
+                    hintStyle: const TextStyle(
+                      color: Color(0xFF7371A8),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: Color(0xFF373979),
+                      size: 25,
+                    ),
+                    prefixIconConstraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 48,
+                    ),
+                    suffixIcon: _query.isEmpty
+                        ? const Icon(
+                            Icons.mic_none_rounded,
+                            color: Color(0xFF5D5EA8),
+                            size: 23,
+                          )
+                        : IconButton(
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() {
+                                _query = '';
+                              });
+                            },
+                            icon: const Icon(Icons.close),
+                            tooltip: 'Limpar pesquisa',
+                          ),
+                    suffixIconConstraints: const BoxConstraints(
+                      minWidth: 44,
+                      minHeight: 48,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 13,
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Center(
-            child: _LocationSummaryCard(
-              icon: _locationSummaryIcon,
-              color: _locationSummaryColor,
-              text: _locationSummary,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Builder(
-                builder: (context) {
-                  return _HeaderIconButton(
-                    icon: Icons.menu_rounded,
-                    label: 'Menu',
-                    tooltip: 'Menu',
-                    selected: true,
-                    onTap: () => Scaffold.of(context).openDrawer(),
-                  );
-                },
-              ),
-              Builder(
-                builder: (context) {
-                  return _HeaderIconButton(
-                    icon: Icons.tune_rounded,
-                    label: 'Filtros',
-                    tooltip: 'Filtros',
-                    showIndicator: !_allCategoriesSelected,
-                    onTap: () => _showFilterMenu(context),
-                  );
-                },
-              ),
-            ],
+          const SizedBox(width: 10),
+          Builder(
+            builder: (context) {
+              return _HeaderIconButton(
+                icon: Icons.tune_rounded,
+                tooltip: 'Filtros',
+                shadowColor: corPerfil,
+                showIndicator: !_allCategoriesSelected,
+                onTap: () => _showFilterMenu(context),
+              );
+            },
           ),
         ],
       ),
@@ -1294,9 +1248,9 @@ class _DashboardViewState extends State<DashboardView> {
 
   Widget _buildBottomNavigation() {
     return SafeArea(
-      minimum: const EdgeInsets.fromLTRB(22, 0, 22, 18),
+      minimum: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Container(
-        height: 86,
+        height: 82,
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.94),
@@ -1311,6 +1265,19 @@ class _DashboardViewState extends State<DashboardView> {
         ),
         child: Row(
           children: [
+            Expanded(
+              child: Builder(
+                builder: (context) {
+                  return _BottomNavItem(
+                    icon: Icons.menu_rounded,
+                    label: 'Menu',
+                    selected: false,
+                    showSideIndicator: true,
+                    onTap: () => Scaffold.of(context).openDrawer(),
+                  );
+                },
+              ),
+            ),
             Expanded(
               child: _BottomNavItem(
                 icon: Icons.map_rounded,
@@ -1931,122 +1898,33 @@ class _TripMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(16),
-      ),
+    return SizedBox(
+      width: 52,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              color: Color(0xFF64748B),
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
             ),
           ),
-          const SizedBox(height: 2),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Color(0xFF111827),
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w900,
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _LocationSummaryCard extends StatelessWidget {
-  const _LocationSummaryCard({
-    required this.icon,
-    required this.color,
-    required this.text,
-  });
-
-  final IconData icon;
-  final Color color;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    final separatorIndex = text.indexOf(' ');
-    final countText =
-        separatorIndex == -1 ? text : text.substring(0, separatorIndex);
-    final labelText =
-        separatorIndex == -1 ? '' : text.substring(separatorIndex + 1);
-
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 220),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.96, end: 1).animate(animation),
-            child: child,
-          ),
-        );
-      },
-      child: Material(
-        key: ValueKey(text),
-        color: Colors.white.withValues(alpha: 0.96),
-        borderRadius: BorderRadius.circular(999),
-        elevation: 9,
-        shadowColor: const Color(0xFF4338CA).withValues(alpha: 0.14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: color,
-                size: 20,
-              ),
-              const SizedBox(width: 7),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 230),
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: countText,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      if (labelText.isNotEmpty)
-                        TextSpan(
-                          text: ' $labelText',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                    ],
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Color(0xFF252A5F),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -2372,16 +2250,14 @@ class _HeaderIconButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
-    this.label,
-    this.selected = false,
+    required this.shadowColor,
     this.showIndicator = false,
   });
 
   final IconData icon;
-  final String? label;
   final String tooltip;
   final VoidCallback onTap;
-  final bool selected;
+  final Color shadowColor;
   final bool showIndicator;
 
   @override
@@ -2390,55 +2266,25 @@ class _HeaderIconButton extends StatelessWidget {
       color: Colors.white.withValues(alpha: 0.94),
       borderRadius: BorderRadius.circular(22),
       elevation: 10,
-      shadowColor: const Color(0xFF4338CA).withValues(alpha: 0.16),
+      shadowColor: shadowColor.withValues(alpha: 0.38),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
         onTap: onTap,
         child: SizedBox(
-          width: label == null ? 58 : 98,
-          height: 58,
+          width: 48,
+          height: 48,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    icon,
-                    color: const Color(0xFF373979),
-                    size: 28,
-                  ),
-                  if (label != null) ...[
-                    const SizedBox(width: 8),
-                    Text(
-                      label!,
-                      style: const TextStyle(
-                        color: Color(0xFF252A5F),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                  ],
-                ],
+              Icon(
+                icon,
+                color: const Color(0xFF373979),
+                size: 24,
               ),
-              if (selected)
-                const Positioned(
-                  bottom: 9,
-                  child: SizedBox(
-                    width: 24,
-                    height: 4,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Color(0xFFFF6A00),
-                        borderRadius: BorderRadius.all(Radius.circular(99)),
-                      ),
-                    ),
-                  ),
-                ),
               if (showIndicator)
                 const Positioned(
-                  top: 12,
-                  right: 12,
+                  top: 9,
+                  right: 9,
                   child: SizedBox(
                     width: 10,
                     height: 10,
@@ -2701,6 +2547,7 @@ class _BottomNavItem extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.selectedIcon,
+    this.showSideIndicator = false,
   });
 
   final IconData icon;
@@ -2708,6 +2555,7 @@ class _BottomNavItem extends StatelessWidget {
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final bool showSideIndicator;
 
   @override
   Widget build(BuildContext context) {
@@ -2729,24 +2577,42 @@ class _BottomNavItem extends StatelessWidget {
               selected ? selectedIcon ?? icon : icon,
               color:
                   selected ? const Color(0xFF2118E8) : const Color(0xFF252A5F),
-              size: 32,
+              size: 27,
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: selected
-                    ? const Color(0xFF2118E8)
-                    : const Color(0xFF252A5F),
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-              ),
+            const SizedBox(height: 3),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: selected
+                          ? const Color(0xFF2118E8)
+                          : const Color(0xFF252A5F),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                if (showSideIndicator) ...[
+                  const SizedBox(width: 2),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: Color(0xFF2118E8),
+                    size: 16,
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
-              width: selected ? 28 : 0,
-              height: 4,
+              width: selected ? 22 : 0,
+              height: 3,
               decoration: BoxDecoration(
                 color: const Color(0xFF2118E8),
                 borderRadius: BorderRadius.circular(99),
@@ -2778,14 +2644,14 @@ class _MapActionButton extends StatelessWidget {
       elevation: 12,
       shadowColor: const Color(0xFF4338CA).withValues(alpha: 0.20),
       child: SizedBox(
-        width: 62,
-        height: 62,
+        width: 54,
+        height: 54,
         child: IconButton(
           onPressed: onTap,
           icon: Icon(
             icon,
             color: const Color(0xFF2118E8),
-            size: 34,
+            size: 30,
           ),
           tooltip: tooltip,
         ),

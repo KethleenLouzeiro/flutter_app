@@ -8,6 +8,7 @@ import 'package:flutter_app/views/politica_privacidade_view.dart';
 import 'package:flutter_app/views/editar_perfil_view.dart';
 import 'package:flutter_app/views/splash_view.dart';
 import 'package:flutter_app/views/tutorial_view.dart';
+import 'package:flutter_app/services/user_local_keys.dart';
 import 'package:flutter_app/widgets/viagebem_message.dart';
 
 class ConfiguracaoView extends StatelessWidget {
@@ -328,7 +329,6 @@ class ConfiguracaoView extends StatelessWidget {
 
       if (user == null) {
         await _desconectarGoogle();
-        await _limparDadosLocaisDoUsuario();
 
         if (!context.mounted) return;
 
@@ -389,33 +389,13 @@ class ConfiguracaoView extends StatelessWidget {
   }
 
   Future<void> _limparDadosLocaisDoUsuario({String? uid}) async {
+    if (uid == null) return;
+
     final prefs = await SharedPreferences.getInstance();
-    final keysToRemove = <String>{
-      'nome_usuario',
-      'foto_usuario',
-      'cor_perfil',
-      'viagebem_favorite_locations',
-      ViageBemTutorial.preferenceKey,
-    };
+    final keysToRemove = UserLocalKeys.allFor(uid);
 
     for (final key in prefs.getKeys()) {
-      final normalized = key.toLowerCase();
-      final belongsToUid = uid != null && key.contains(uid);
-      final isUserData = normalized.contains('usuario') ||
-          normalized.contains('user') ||
-          normalized.contains('perfil') ||
-          normalized.contains('profile') ||
-          normalized.contains('foto') ||
-          normalized.contains('photo') ||
-          normalized.contains('favorit') ||
-          normalized.contains('favorite') ||
-          normalized.contains('sessao') ||
-          normalized.contains('session') ||
-          normalized.contains('login') ||
-          normalized.contains('auth') ||
-          normalized.contains('tutorial');
-
-      if (belongsToUid || isUserData) {
+      if (key.endsWith('_$uid')) {
         keysToRemove.add(key);
       }
     }

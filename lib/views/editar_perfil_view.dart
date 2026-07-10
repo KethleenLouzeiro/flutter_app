@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 
+import '../services/user_local_keys.dart';
 import '../widgets/viagebem_message.dart';
 
 class EditarPerfilView extends StatefulWidget {
@@ -52,14 +53,18 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
   Future<void> _carregarPerfil() async {
     final prefs = await SharedPreferences.getInstance();
     final user = FirebaseAuth.instance.currentUser;
-    final nomeSalvo = prefs.getString('nome_usuario');
-    final fotoSalva = prefs.getString('foto_usuario');
-    final corSalva = prefs.getInt('cor_perfil');
+    final uid = user?.uid;
+    final nomeSalvo =
+        uid == null ? null : prefs.getString(UserLocalKeys.nomeUsuario(uid));
+    final fotoSalva =
+        uid == null ? null : prefs.getString(UserLocalKeys.fotoUsuario(uid));
+    final corSalva =
+        uid == null ? null : prefs.getInt(UserLocalKeys.corPerfil(uid));
 
     if (!mounted) return;
 
     setState(() {
-      _nomeController.text = nomeSalvo ?? user?.displayName ?? '';
+      _nomeController.text = nomeSalvo ?? user?.email ?? '';
       _emailController.text = user?.email ?? '';
       _caminhoImagem = fotoSalva;
 
@@ -189,20 +194,32 @@ class _EditarPerfilViewState extends State<EditarPerfilView> {
               height: 55,
               child: ElevatedButton(
                 onPressed: () async {
+                  final uid = UserLocalKeys.currentUid;
+
+                  if (uid == null) {
+                    showViageBemMessage(
+                      context,
+                      title: 'Sessao expirada',
+                      subtitle: 'Entre novamente para editar seu perfil.',
+                      type: ViageBemMessageType.warning,
+                    );
+                    return;
+                  }
+
                   final prefs = await SharedPreferences.getInstance();
 
                   await prefs.setString(
-                    'nome_usuario',
+                    UserLocalKeys.nomeUsuario(uid),
                     _nomeController.text,
                   );
                   if (_caminhoImagem != null) {
                     await prefs.setString(
-                      'foto_usuario',
+                      UserLocalKeys.fotoUsuario(uid),
                       _caminhoImagem!,
                     );
                   }
                   await prefs.setInt(
-                    'cor_perfil',
+                    UserLocalKeys.corPerfil(uid),
                     corSelecionada.toARGB32(),
                   );
 
